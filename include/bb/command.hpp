@@ -1,14 +1,14 @@
 
 /* -------------------------------------------------------------------------- */
 
-#ifndef __BB_COMMAND_H__
-# define __BB_COMMAND_H__
+#ifndef __BB_COMMAND_HPP__
+# define __BB_COMMAND_HPP__
 
 /*******************************************************************************
  * %% BeginSection: includes
  */
 
-# include <bb/types.h>
+# include <bb/types.hpp>
 # include <vector>
 # include <filesystem>
 
@@ -93,7 +93,7 @@ void cmd(acontext& aCtx, const Args&... anArgs)
 
 }
 
-#endif /* !defined(__BB_COMMAND_H__) */
+#endif /* !defined(__BB_COMMAND_HPP__) */
 
 /*******************************************************************************
  *

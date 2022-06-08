@@ -1,16 +1,15 @@
 
 /* -------------------------------------------------------------------------- */
 
-#ifndef __BB_TYPES_I_H__
-# define __BB_TYPES_I_H__
+#ifndef __BB_TYPES_I_HPP__
+# define __BB_TYPES_I_HPP__
 
 /*******************************************************************************
  * %% BeginSection: includes
  */
 
-# include "bb/types.h"
-# include "bb/rule.h"
-
+# include "bb/types.hpp"
+# include "bb/rule.hpp"
 # include <vector>
 # include <unordered_map>
 # include <typeindex>
@@ -105,7 +104,7 @@ struct acontext {
 
 }
 
-#endif /* !defined(__BB_TYPES_I_H__) */
+#endif /* !defined(__BB_TYPES_I_HPP__) */
 
 /*******************************************************************************
  *

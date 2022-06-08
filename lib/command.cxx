@@ -3,8 +3,8 @@
  * %% BeginSection: includes
  */
 
-#include "bb/command.h"
-#include "bb/log.h"
+#include "bb/command.hpp"
+#include "bb/log.hpp"
 
 #include <sstream>
 

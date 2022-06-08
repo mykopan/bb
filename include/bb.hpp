@@ -1,22 +1,20 @@
 
 /* -------------------------------------------------------------------------- */
 
-#ifndef __BB_H__
-# define __BB_H__
+#ifndef __BB_HPP__
+# define __BB_HPP__
 
 /*******************************************************************************
  * %% BeginSection: includes
  */
 
-# include <bb/types.h>
-# include <bb/run.h>
-# include <bb/command.h>
-# include <bb/log.h>
-# include <bb/rules.h>
-# include <bb/rules/start.h>
-# include <bb/rules/file.h>
+# include <bb/command.hpp>
+# include <bb/log.hpp>
+# include <bb/rules.hpp>
+# include <bb/run.hpp>
+# include <bb/types.hpp>
 
-#endif /* !defined(__BB_H__) */
+#endif /* !defined(__BB_HPP__) */
 
 /*******************************************************************************
  *

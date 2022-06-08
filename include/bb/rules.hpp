@@ -1,16 +1,16 @@
 
 /* -------------------------------------------------------------------------- */
 
-#ifndef __BB_RULES_H__
-# define __BB_RULES_H__
+#ifndef __BB_RULES_HPP__
+# define __BB_RULES_HPP__
 
 /*******************************************************************************
  * %% BeginSection: includes
  */
 
-# include <bb/types.h>
-# include <bb/rules/start.h>
-# include <bb/rules/file.h>
+# include <bb/types.hpp>
+# include <bb/rules/start.hpp>
+# include <bb/rules/file.hpp>
 # include <functional>
 
 /*******************************************************************************
@@ -48,7 +48,7 @@ extern void priority(rules&, int, const std::function<void(rules&)>&);
 
 }
 
-#endif /* !defined(__BB_RULE_H__) */
+#endif /* !defined(__BB_RULES_HPP__) */
 
 /*******************************************************************************
  *

@@ -1,14 +1,14 @@
 
 /* -------------------------------------------------------------------------- */
 
-#ifndef __BB_LOG_H__
-# define __BB_LOG_H__
+#ifndef __BB_LOG_HPP__
+# define __BB_LOG_HPP__
 
 /*******************************************************************************
  * %% BeginSection: includes
  */
 
-# include <bb/types.h>
+# include <bb/types.hpp>
 # include <string>
 
 /*******************************************************************************
@@ -45,7 +45,7 @@ extern void error(acontext&, const std::string&);
 
 }
 
-#endif /* !defined(__BB_LOG_H__) */
+#endif /* !defined(__BB_LOG_HPP__) */
 
 /*******************************************************************************
  *

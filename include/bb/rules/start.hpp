@@ -1,14 +1,14 @@
 
 /* -------------------------------------------------------------------------- */
 
-#ifndef __BB_RULES_START_H__
-# define __BB_RULES_START_H__
+#ifndef __BB_RULES_START_HPP__
+# define __BB_RULES_START_HPP__
 
 /*******************************************************************************
  * %% BeginSection: includes
  */
 
-# include <bb/types.h>
+# include <bb/types.hpp>
 # include <functional>
 
 /*******************************************************************************
@@ -25,7 +25,7 @@ extern void action(rules&, const std::function<void(acontext&)>&);
 
 }
 
-#endif /* !defined(__BB_RULES_START_H__) */
+#endif /* !defined(__BB_RULES_START_HPP__) */
 
 /*******************************************************************************
  *

@@ -3,8 +3,8 @@
  * %% BeginSection: includes
  */
 
-#include "bb/typesI.h"
-#include "bb/log.h"
+#include "bb/typesI.hpp"
+#include "bb/log.hpp"
 
 /*******************************************************************************
  * %% BeginSection: function definitions

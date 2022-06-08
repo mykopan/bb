@@ -3,8 +3,8 @@
  * %% BeginSection: includes
  */
 
-#include "bb/typesI.h"
-#include "bb/rule.h"
+#include "bb/typesI.hpp"
+#include "bb/rule.hpp"
 
 #include <sstream>
 #include <optional>

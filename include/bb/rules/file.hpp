@@ -1,14 +1,14 @@
 
 /* -------------------------------------------------------------------------- */
 
-#ifndef __BB_RULES_FILE_H__
-# define __BB_RULES_FILE_H__
+#ifndef __BB_RULES_FILE_HPP__
+# define __BB_RULES_FILE_HPP__
 
 /*******************************************************************************
  * %% BeginSection: includes
  */
 
-# include <bb/types.h>
+# include <bb/types.hpp>
 # include <functional>
 # include <vector>
 # include <string>
@@ -24,7 +24,7 @@
 namespace bb {
 
 typedef std::filesystem::path filepath;
-typedef std::string fpattern;
+typedef std::string           fpattern;
 
 /* Add a dependency on the file arguments, ensuring they are built before
  * continuing. The file arguments may be built in parallel, in any order.
@@ -58,7 +58,7 @@ extern void default_file_rule(rules&);
 
 }
 
-#endif /* !defined(__BB_RULES_FILE_H__) */
+#endif /* !defined(__BB_RULES_FILE_HPP__) */
 
 /*******************************************************************************
  *

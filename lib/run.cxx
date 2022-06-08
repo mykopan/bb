@@ -3,9 +3,9 @@
  * %% BeginSection: includes
  */
 
-#include "bb/typesI.h"
-#include "bb/run.h"
-#include "bb/rules/file.h"
+#include "bb/typesI.hpp"
+#include "bb/run.hpp"
+#include "bb/rules/file.hpp"
 #include <mutex>
 #include <algorithm>
 

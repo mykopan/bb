@@ -1,8 +1,8 @@
 
 /* -------------------------------------------------------------------------- */
 
-#ifndef __BB_TYPES_H__
-# define __BB_TYPES_H__
+#ifndef __BB_TYPES_HPP__
+# define __BB_TYPES_HPP__
 
 /*******************************************************************************
  * %% BeginSection: includes
@@ -44,7 +44,7 @@ enum verbosity {
 };
 
 
-/* How should you determine if a file has changed, used by options::change.
+/* How should you determine if a file has changed, used by bb::options::change.
  * The most common values are MODTIME (the default, very fast,
  * touch causes files to rebuild) and MODTIME_AND_DIGEST_INPUT
  * (slightly slower, touch and switching git branches does not cause input files
@@ -118,12 +118,13 @@ struct options {
 	std::function<void(bb::verbosity, const std::string&)> output;
 };
 
+
 struct rules;    /* The set of build rules */
 struct acontext; /* The build action context */
 
 }
 
-#endif /* !defined(__BB_TYPES_H__) */
+#endif /* !defined(__BB_TYPES_HPP__) */
 
 /*******************************************************************************
  *

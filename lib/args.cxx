@@ -3,7 +3,7 @@
  * %% BeginSection: includes
  */
 
-#include "bb/run.h"
+#include "bb/run.hpp"
 
 /*******************************************************************************
  * %% BeginSection: function definitions

@@ -1,14 +1,14 @@
 
 /* -------------------------------------------------------------------------- */
 
-#ifndef __BB_RUN_H__
-# define __BB_RUN_H__
+#ifndef __BB_RUN_HPP__
+# define __BB_RUN_HPP__
 
 /*******************************************************************************
  * %% BeginSection: includes
  */
 
-# include <bb/types.h>
+# include <bb/types.hpp>
 # include <functional>
 
 /*******************************************************************************
@@ -33,7 +33,7 @@ extern int args(int, char*[], const options&, const std::function<void(rules&)>&
 
 }
 
-#endif /* !defined(__BB_RUN_H__) */
+#endif /* !defined(__BB_RUN_HPP__) */
 
 /*******************************************************************************
  *

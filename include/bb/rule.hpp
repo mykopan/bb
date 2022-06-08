@@ -1,14 +1,14 @@
 
 /* -------------------------------------------------------------------------- */
 
-#ifndef __BB_RULE_H__
-# define __BB_RULE_H__
+#ifndef __BB_RULE_HPP__
+# define __BB_RULE_HPP__
 
 /*******************************************************************************
  * %% BeginSection: includes
  */
 
-# include <bb/types.h>
+# include <bb/types.hpp>
 # include <functional>
 # include <memory>
 
@@ -56,7 +56,7 @@ extern void apply_rule_(acontext&, const rule_cls&, const key&);
 
 }
 
-#endif /* !defined(__BB_RULE_H__) */
+#endif /* !defined(__BB_RULE_HPP__) */
 
 /*******************************************************************************
  *
