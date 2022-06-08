@@ -1,0 +1,2 @@
+The content of the file3.txt
+
