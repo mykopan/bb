@@ -21,6 +21,7 @@ BB_OBJS= \
   build/log.cxx.o \
   build/options.cxx.o \
   build/rule.cxx.o \
+  build/rules.cxx.o \
   build/run.cxx.o \
 	build/rules/start.cxx.o \
 	build/rules/file.cxx.o
@@ -45,6 +46,9 @@ build/options.cxx.o : lib/options.cxx | build
 
 build/rule.cxx.o : lib/rule.cxx | build
 	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/rule.cxx.o lib/rule.cxx
+
+build/rules.cxx.o : lib/rules.cxx | build
+	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/rules.cxx.o lib/rules.cxx
 
 build/run.cxx.o : lib/run.cxx | build
 	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/run.cxx.o lib/run.cxx

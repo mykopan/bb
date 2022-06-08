@@ -5,6 +5,7 @@
 
 #include "bb/typesI.hpp"
 #include "bb/rules.hpp"
+#include "bb/errorsI.hpp"
 
 /*******************************************************************************
  * %% BeginSection: function definitions
@@ -27,29 +28,27 @@ static rules& _t_merge_rules(rules& aSrcDst, const rules& aSrc)
 {
 	_t_vector_append(aSrcDst.actions, aSrc.actions);
 
-	for (const auto& typrulSrc : aSrc.rules) {
-		std::type_index keyTypeIndex = typrulSrc.first;
-		const auto& rulesSrc = typrulSrc.second;
+	for (const auto& tcruleSrc : aSrc.crules) {
+		const auto& typeOfKey = tcruleSrc.first;
+		const auto& cruleSrc = tcruleSrc.second;
+		auto iter = aSrcDst.crules.find(typeOfKey);
+		if (aSrcDst.crules.end() != iter) {
+			auto& cruleSrcDst = iter->second;
 
-		auto iter = aSrcDst.rules.find(keyTypeIndex);
-		if (aSrcDst.rules.end() != iter) {
-			auto rulesSrcDst = iter->second;
-			const auto& valueTypeInfo = rulesSrc.first.value_cls.type_info;
-			const auto& value2TypeInfo = rulesSrcDst.first.value_cls.type_info;
+			assert(cruleSrcDst.cls.key_cls.type_info == cruleSrc.cls.key_cls.type_info);
 
-			assert(rulesSrcDst.first.key_cls.type_info == rulesSrc.first.key_cls.type_info);
-			if (value2TypeInfo != valueTypeInfo) {
-				throw std::runtime_error(std::string("cannot add rule of type '")
-					+ keyTypeIndex.name() + " -> " + valueTypeInfo.name()
-					+ "' because has rule of type '"
-					+ keyTypeIndex.name() + " -> " + value2TypeInfo.name()
-					+ "' (rule value type cannot be different for the same type of key)"
-					);
+			if (cruleSrcDst.cls.value_cls.type_info != cruleSrc.cls.value_cls.type_info)
+			{
+				throw error_incompatible_rules(
+					cruleSrcDst.cls.key_cls.type_info,
+					cruleSrcDst.cls.value_cls.type_info,
+					cruleSrc.cls.value_cls.type_info);
+				/* NOTREACHED */
 			}
-			_t_vector_append(rulesSrcDst.second, rulesSrc.second);
+			_t_vector_append(cruleSrcDst.prules, cruleSrc.prules);
 		}
 		else {
-			aSrcDst.rules.insert({ keyTypeIndex, rulesSrc });
+			aSrcDst.crules.insert({ typeOfKey, cruleSrc });
 		}
 	}
 	return (aSrcDst);
@@ -65,9 +64,9 @@ priority(
 	rules rules;
 
 	aRulesGen(rules);
-	for (auto& x : rules.rules) {
-		for (auto& y : x.second.second)
-			y.first = aPrio;
+	for (auto& tcrule : rules.crules) {
+		for (auto& prule : tcrule.second.prules)
+			prule.priority = aPrio;
 	}
 
 	_t_merge_rules(Rules, rules);
