@@ -16,9 +16,6 @@
 /*******************************************************************************
  * %% BeginSection: function declarations
  */
-# pragma mark -
-# pragma mark [ function declarations ]
-# pragma mark -
 
 namespace bb {
 

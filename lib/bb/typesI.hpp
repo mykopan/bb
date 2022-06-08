@@ -17,9 +17,6 @@
 /*******************************************************************************
  * %% BeginSection: type/constant declarations
  */
-# pragma mark -
-# pragma mark [ type/constant declarations ]
-# pragma mark -
 
 namespace bb {
 

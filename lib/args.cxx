@@ -8,9 +8,6 @@
 /*******************************************************************************
  * %% BeginSection: function definitions
  */
-# pragma mark -
-# pragma mark [ function definitions ]
-# pragma mark -
 
 namespace bb {
 

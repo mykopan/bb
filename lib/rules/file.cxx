@@ -8,16 +8,12 @@
 #include "bb/rule.hpp"
 #include "bb/rules/start.hpp"
 #include "bb/rules/file.hpp"
-// #include <memory>
 #include <sstream>
 #include <iomanip>
 
 /*******************************************************************************
  * %% BeginSection: function definitions
  */
-# pragma mark -
-# pragma mark [ function definitions ]
-# pragma mark -
 
 namespace bb {
 
