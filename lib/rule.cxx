@@ -3,11 +3,9 @@
  * %% BeginSection: includes
  */
 
-#include "bb/typesI.hpp"
+#include "bb/errorsI.hpp"
 #include "bb/rule.hpp"
-
-#include <sstream>
-#include <optional>
+#include "bb/typesI.hpp"
 
 /*******************************************************************************
  * %% BeginSection: function definitions
@@ -34,15 +32,9 @@ add_rule(
 		assert(crule.cls.key_cls.type_info == aCls.key_cls.type_info);
 
 		if (crule.cls.value_cls.type_info != aCls.value_cls.type_info) {
-			std::stringstream errmsg;
-			errmsg << "Error: cannot add rule of type '" <<
-				aCls.key_cls.type_info.name() << " -> " <<
-				aCls.value_cls.type_info.name() <<
-				"' because has rule of type '" <<
-				crule.cls.key_cls.type_info.name() << " -> " <<
-				crule.cls.value_cls.type_info.name() <<
-				"' (rule value type cannot be different for the same type of key)";
-			throw std::runtime_error(errmsg.str());
+			throw error_incompatible_rules(aCls.key_cls.type_info,
+				crule.cls.value_cls.type_info,
+				aCls.value_cls.type_info);
 			/* NOTREACHED */
 		}
 		crule.prules.push_back(prule(aPrio, rule(aPred, anAction)));
@@ -55,7 +47,6 @@ add_rule(
 
 static const rule&
 _t_lookup_rule(
-	char const *aFuncName,
 	const acontext& aCtx,
 	const rule_cls& aCls,
 	const key& aKey
@@ -63,36 +54,26 @@ _t_lookup_rule(
 {
 	auto iter = aCtx.rules.crules.find(aCls.key_cls.type_info);
 	if (aCtx.rules.crules.end() == iter) {
-		std::stringstream errmsg;
-		errmsg << "Error: " << aFuncName << ": not found rule of type '" <<
-			aCls.key_cls.type_info.name() << " -> " <<
-			aCls.value_cls.type_info.name() <<
-			"' for build " << aCls.key_cls.show(aKey);
-		throw std::runtime_error(errmsg.str());
+		throw error_no_rule_to_build_type(aCls.key_cls.type_info,
+			aCls.key_cls.show(aKey), aCls.value_cls.type_info);
 		/* NOTREACHED */
 	}
 	const crule& crule = iter->second;
 
 	assert(crule.cls.key_cls.type_info == aCls.key_cls.type_info);
 	if (crule.cls.value_cls.type_info != aCls.value_cls.type_info) {
-		std::stringstream errmsg;
-		errmsg << "Error: " << aFuncName << ": cannot found rule of type '" <<
-			aCls.key_cls.type_info.name() << " -> " <<
-			aCls.value_cls.type_info.name() <<
-			"' for build " << aCls.key_cls.show(aKey) <<
-			", but has rule of type '" <<
-			crule.cls.key_cls.type_info.name() << " -> " <<
-			crule.cls.value_cls.type_info.name() <<
-			"' (rule value type cannot be different for the same type of key)";
-		throw std::runtime_error(errmsg.str());
+		throw error_rule_type_mismatch(aCls.key_cls.type_info,
+			aCls.key_cls.show(aKey),
+			crule.cls.value_cls.type_info,
+			aCls.value_cls.type_info);
 		/* NOTREACHED */
 	}
 
-	for (auto pruleIter = crule.prules.begin();
-			crule.prules.end() != pruleIter;
-				++pruleIter)
-	{
+	size_t nmatches = 0;
+	auto pruleIter = crule.prules.begin();
+	for (; crule.prules.end() != pruleIter; ++pruleIter) {
 		if (pruleIter->rule.predicate(aKey)) {
+			++nmatches;
 			/* check that there are not others rules with same priority and
 			 * which satisfies predicate */
 			// @todo: maybe this check should be optional?
@@ -101,34 +82,26 @@ _t_lookup_rule(
 					&& pruleIter->priority == pruleIter2->priority;
 						++pruleIter2)
 			{
-				if (pruleIter2->rule.predicate(aKey)) {
-					std::stringstream errmsg;
-					errmsg << "Error: " << aFuncName <<
-						": found at least two build rules of type '" <<
-						aCls.key_cls.type_info.name() << " -> " <<
-						aCls.value_cls.type_info.name() <<
-						"' with the same priority that satisfy the predicate"
-						" on the key " << aCls.key_cls.show(aKey) <<
-						" (all rules with the same priority must be disjoint)";
-					throw std::runtime_error(errmsg.str());
-					/* NOTREACHED */
-				}
+				if (pruleIter2->rule.predicate(aKey))
+					++nmatches;
 			}
-
-			return (pruleIter->rule);
+			break;
 			/* NOTREACHED */
 		}
 	}
 
-	std::stringstream errmsg;
-	errmsg << "Error: " << aFuncName << ": no rule available for build: " <<
-		aCls.key_cls.show(aKey);
-	throw std::runtime_error(errmsg.str());
+	if (1 != nmatches) {
+		throw error_multiple_rules_match(aCls.key_cls.type_info,
+			aCls.key_cls.show(aKey), nmatches);
+		/* NOTREACHED */
+	}
+
+	return (pruleIter->rule);
 }
 
 value apply_rule(acontext& aCtx, const rule_cls& aCls, const key& aKey)
 {
-	const rule& r = _t_lookup_rule("bb::apply_rule", aCtx, aCls, aKey);
+	const rule& r = _t_lookup_rule(aCtx, aCls, aKey);
 	return r.action(aCtx, aKey);
 }
 

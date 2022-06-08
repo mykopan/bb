@@ -17,6 +17,7 @@ build/test: build/bb.a examples/test.cxx | build
 BB_OBJS= \
   build/args.cxx.o \
   build/command.cxx.o \
+  build/errors.cxx.o \
   build/log.cxx.o \
   build/options.cxx.o \
   build/rule.cxx.o \
@@ -32,6 +33,9 @@ build/args.cxx.o : lib/args.cxx | build
 
 build/command.cxx.o : lib/command.cxx | build
 	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/command.cxx.o lib/command.cxx
+
+build/errors.cxx.o : lib/errors.cxx | build
+	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/errors.cxx.o lib/errors.cxx
 
 build/log.cxx.o : lib/log.cxx | build
 	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/log.cxx.o lib/log.cxx

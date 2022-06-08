@@ -4,6 +4,7 @@
  */
 
 #include "bb/typesI.hpp"
+#include "bb/errorsI.hpp"
 #include "bb/rule.hpp"
 #include "bb/rules/start.hpp"
 #include "bb/rules/file.hpp"
@@ -95,11 +96,19 @@ static std::shared_ptr<fileA>
 _t_stored_value(const std::shared_ptr<fileQ>& aFileQ)
 {
 	fs::file_status stat = symlink_status(aFileQ->file_path);
-	if (fs::exists(stat) && !fs::is_regular_file(stat) && !fs::is_symlink(stat))
-	{
-		throw std::runtime_error(
-			"Error: file is not regual and not symlink: " +
-			aFileQ->file_path.string());
+	if (fs::exists(stat)) {
+		if (fs::is_directory(stat)) {
+			throw error_directory_not_file(aFileQ->file_path);
+			/* NOTREACHED */
+		}
+		if (fs::is_symlink(stat)) {
+			throw error_symlink_not_file(aFileQ->file_path);
+			/* NOTREACHED */
+		}
+		if (!fs::is_regular_file(stat)) {
+			throw error_not_file(aFileQ->file_path);
+			/* NOTREACHED */
+		}
 	}
 	return std::make_shared<fileA>(fs::last_write_time(aFileQ->file_path));
 }
