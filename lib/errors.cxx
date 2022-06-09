@@ -20,26 +20,31 @@ error_structured(
 	)
 {
 	std::stringstream errmsg;
-	size_t argszMax;
+	size_t argszMax, nargs;
 
-	argszMax = 0;
-	for (const auto& arg : Args) {
-		if (arg.second)
-			argszMax = std::max(argszMax, arg.first.length());
-	}
-
-	errmsg << aMessage << ":" << std::endl;
+	argszMax = nargs = 0;
 	for (const auto& arg : Args) {
 		if (arg.second) {
-			errmsg << "  " << arg.first;
+			argszMax = std::max(argszMax, arg.first.length());
+			++nargs;
+		}
+	}
+
+	errmsg << aMessage;
+	if (0 < nargs || !aHint.empty())
+		errmsg << ':';
+
+	for (const auto& arg : Args) {
+		if (arg.second) {
+			errmsg << std::endl << "  " << arg.first;
 			if (!arg.first.empty())
 				errmsg << ':';
 			errmsg << std::string(2 + argszMax - arg.first.length(), ' ') <<
-				*arg.second << std::endl;
+				*arg.second;
 		}
 	}
 	if (!aHint.empty())
-		errmsg << aHint << std::endl;
+		errmsg << std::endl << aHint;
 
 	return std::runtime_error(errmsg.str());
 }

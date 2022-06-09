@@ -22,10 +22,10 @@
 namespace bb {
 
 struct Object {
-	const object_cls& cls;
-	object            obj;
+	const untyped_object_cls& cls;
+	untyped_object            obj;
 
-	Object(const object_cls& aCls, const object& anObj)
+	Object(const untyped_object_cls& aCls, const untyped_object& anObj)
 		: cls(aCls), obj(anObj) {}
 
 	inline const std::type_info& type_info() const
@@ -68,14 +68,14 @@ typedef Object Value;
 
 struct rule {
 	rule(
-		const std::function<bool(const key&)>& aPred,
-		const std::function<value(acontext&, const key&)>& anAction
+		const std::function<bool(const untyped_key&)>& aPred,
+		const std::function<untyped_value(acontext&, const untyped_key&)>& anAction
 		)
 		: predicate(aPred), action(anAction)
 	{}
 
-	std::function<bool(const key&)>             predicate;
-	std::function<value(acontext&, const key&)> action;
+	std::function<bool(const untyped_key&)>                     predicate;
+	std::function<untyped_value(acontext&, const untyped_key&)> action;
 };
 
 struct prule {
@@ -88,12 +88,12 @@ struct prule {
 };
 
 struct crule {
-	crule(const rule_cls& aCls, const std::vector<prule>& PRules)
+	crule(const untyped_rule_cls& aCls, const std::vector<prule>& PRules)
 		: cls(aCls), prules(PRules)
 	{}
 
-	const rule_cls&     cls;
-	std::vector<prule>  prules;
+	const untyped_rule_cls& cls;
+	std::vector<prule>      prules;
 };
 
 struct rules {

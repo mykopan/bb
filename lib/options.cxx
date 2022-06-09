@@ -20,7 +20,7 @@ static options _s_options = {
 	.staunch = false,
 	.change = MODTIME,
 	.output = [](verbosity, const std::string& aMsg) {
-		std::cout << aMsg << '\n';
+		std::cout << aMsg << std::endl;
 	}
 };
 const options& default_options = _s_options;

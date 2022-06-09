@@ -24,22 +24,17 @@ struct fileQ {
 	filepath file_path;
 };
 
-static const object_cls _S_fileQ_cls = {
-	.type_info = typeid(fileQ),
-	.show = [](const object& aFileQ) {
-		const auto& fileKey = reinterpret_cast< const std::shared_ptr<fileQ>& >(aFileQ);
+static const object_cls<fileQ> _S_fileQ_cls = {
+	.show = [](const object<fileQ>& aFileQ) {
 		std::stringstream output;
-		output << "fileQ(" << std::quoted(fileKey->file_path.string()) << ")";
+		output << "fileQ(" << std::quoted(aFileQ->file_path.string()) << ")";
 		return (output.str());
 	},
-	.hash = [](const object& aFileQ) {
-		const auto& fileKey = reinterpret_cast< const std::shared_ptr<fileQ>& >(aFileQ);
-		return std::hash<std::string>{}(fileKey->file_path);
+	.hash = [](const object<fileQ>& aFileQ) {
+		return std::hash<std::string>{}(aFileQ->file_path);
 	},
-	.equal = [](const object& aLhsQ, const object& aRhsQ) {
-		const auto& lhsKey = reinterpret_cast< const std::shared_ptr<fileQ>& >(aLhsQ);
-		const auto& rhsKey = reinterpret_cast< const std::shared_ptr<fileQ>& >(aRhsQ);
-		return (lhsKey->file_path == rhsKey->file_path);
+	.equal = [](const object<fileQ>& aLhs, const object<fileQ>& aRhs) {
+		return (aLhs->file_path == aRhs->file_path);
 	}
 };
 
@@ -48,29 +43,24 @@ struct fileA {
 	fs::file_time_type mtime;
 };
 
-static const object_cls _S_fileA_cls = {
-	.type_info = typeid(fileA),
-	.show = [](const object& aFileA) {
-		const auto& fileValue = reinterpret_cast< const std::shared_ptr<fileA>& >(aFileA);
-		(void) fileValue;
+static const object_cls<fileA> _S_fileA_cls = {
+	.show = [](const object<fileA>& aFileA) {
+		(void) aFileA;
 		std::stringstream output;
 		output << "fileA(@todo-mtime)";
 		return (output.str());
 	},
-	.hash = [](const object& aFileA) {
-		const auto& fileValue = reinterpret_cast< const std::shared_ptr<fileA>& >(aFileA);
-		(void) fileValue;
+	.hash = [](const object<fileA>& aFileA) {
+		(void) aFileA;
 		// return std::hash<fs::file_time_type>{}(fileValue->mtime);
 		return 0;
 	},
-	.equal = [](const object& aLhsA, const object& aRhsA) {
-		const auto& lhsValue = reinterpret_cast< const std::shared_ptr<fileA>& >(aLhsA);
-		const auto& rhsValue = reinterpret_cast< const std::shared_ptr<fileA>& >(aRhsA);
-		return (lhsValue->mtime == rhsValue->mtime);
+	.equal = [](const object<fileA>& aLhs, const object<fileA>& aRhs) {
+		return (aLhs->mtime == aRhs->mtime);
 	}
 };
 
-static const rule_cls _S_file_rule_cls = {
+static const rule_cls<fileQ, fileA> _S_file_rule_cls = {
 	.key_cls = _S_fileQ_cls,
 	.value_cls = _S_fileA_cls
 };
@@ -82,14 +72,13 @@ void want(rules& Rules, const std::vector<filepath>& Files)
 
 void need(acontext& aCtx, const std::vector<filepath>& Files)
 {
-	std::vector<key> qFiles;
+	std::vector< key<fileQ> > qFiles;
 	for (const auto& file : Files)
 		qFiles.push_back(std::make_shared<fileQ>(file));
 	apply_rules_(aCtx, _S_file_rule_cls, qFiles);
 }
 
-static std::shared_ptr<fileA>
-_t_stored_value(const std::shared_ptr<fileQ>& aFileQ)
+static value<fileA> _t_stored_value(const key<fileQ>& aFileQ)
 {
 	fs::file_status stat = symlink_status(aFileQ->file_path);
 	if (fs::exists(stat)) {
@@ -111,26 +100,25 @@ _t_stored_value(const std::shared_ptr<fileQ>& aFileQ)
 
 void default_file_rule(rules& Rules)
 {
-	add_rule(Rules, _S_file_rule_cls, 0,
-		[](const key& aFileQ) { (void)aFileQ; return (true); },
-		[](acontext& aCtx, const key& aFileQ) {
-			const auto& fileKey = reinterpret_cast< const std::shared_ptr<fileQ>& >(aFileQ);
-			std::shared_ptr<fileA> fileValue;
+	add_rule<fileQ, fileA>(Rules, _S_file_rule_cls, 0,
+		[](const key<fileQ>& aFileQ) { (void)aFileQ; return (true); },
+		[](acontext& aCtx, const key<fileQ>& aFileQ) {
+			value<fileA> fileA;
 
 			(void)aCtx;
 
 			try {
-				fileValue = _t_stored_value(fileKey);
+				fileA = _t_stored_value(aFileQ);
 			}
 			catch (const fs::filesystem_error& err) {
 				if (err.code() == std::errc::no_such_file_or_directory) {
 					throw std::runtime_error(
 						"Error: file does not exist and no rule available: " +
-						fileKey->file_path.string());
+						aFileQ->file_path.string());
 				}
 				throw;
 			}
-			return static_cast<value>(fileValue);
+			return (fileA);
 		});
 }
 
@@ -141,29 +129,27 @@ file(
 	const std::function<void(acontext&, const filepath&)>& anAction
 	)
 {
-	add_rule(Rules, _S_file_rule_cls, 1,
-		[aPattern](const key& aFileQ) {
-			const auto& fileKey = reinterpret_cast< const std::shared_ptr<fileQ>& >(aFileQ);
-			return is_subset_fpattern(fileKey->file_path, aPattern);
+	add_rule<fileQ, fileA>(Rules, _S_file_rule_cls, 1,
+		[aPattern](const key<fileQ>& aFileQ) {
+			return is_subset_fpattern(aFileQ->file_path, aPattern);
 		},
-		[anAction](acontext& aCtx, const key& aFileQ) {
-			const auto& fileKey = reinterpret_cast< const std::shared_ptr<fileQ>& >(aFileQ);
-			std::shared_ptr<fileA> fileValue;
+		[anAction](acontext& aCtx, const key<fileQ>& aFileQ) {
+			value<fileA> fileA;
 
-			fs::create_directories(fileKey->file_path.parent_path());
-			anAction(aCtx, fileKey->file_path);
+			fs::create_directories(aFileQ->file_path.parent_path());
+			anAction(aCtx, aFileQ->file_path);
 			try {
-				fileValue = _t_stored_value(fileKey);
+				fileA = _t_stored_value(aFileQ);
 			}
 			catch (const fs::filesystem_error& err) {
 				if (err.code() == std::errc::no_such_file_or_directory) {
 					throw std::runtime_error(
 						"Error, rule failed to build the file: " +
-						fileKey->file_path.string());
+						aFileQ->file_path.string());
 				}
 				throw;
 			}
-			return static_cast<value>(fileValue);
+			return (fileA);
 		});
 }
 

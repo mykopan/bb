@@ -14,12 +14,12 @@
 namespace bb {
 
 void
-add_rule(
+unsafe_add_rule(
 	rules& Rules,
-	const rule_cls& aCls,
+	const untyped_rule_cls& aCls,
 	int aPrio,
-	const std::function<bool(const key&)>& aPred,
-	const std::function<value(acontext&, const key&)>& anAction
+	const std::function<bool(const untyped_key&)>& aPred,
+	const std::function<untyped_value(acontext&, const untyped_key&)>& anAction
 	)
 {
 	auto iter = Rules.crules.find(aCls.key_cls.type_info);
@@ -45,8 +45,8 @@ add_rule(
 static const rule&
 _t_lookup_rule(
 	const acontext& aCtx,
-	const rule_cls& aCls,
-	const key& aKey
+	const untyped_rule_cls& aCls,
+	const untyped_key& aKey
 	)
 {
 	auto iter = aCtx.rules.crules.find(aCls.key_cls.type_info);
@@ -96,9 +96,14 @@ _t_lookup_rule(
 	return (pruleIter->rule);
 }
 
-value apply_rule(acontext& aCtx, const rule_cls& aCls, const key& aKey)
+untyped_value
+unsafe_apply_rule(
+	acontext& aCtx,
+	const untyped_rule_cls& aCls,
+	const untyped_key& aKey
+	)
 {
-	value retval;
+	untyped_value retval;
 
 	Key ruleKey(aCls.key_cls, aKey);
 	if (aCtx.inprogress_keys.count(ruleKey)) {
@@ -125,34 +130,39 @@ value apply_rule(acontext& aCtx, const rule_cls& aCls, const key& aKey)
 	return (retval);
 }
 
-void apply_rule_(acontext& aCtx, const rule_cls& aCls, const key& aKey)
-{
-	apply_rule(aCtx, aCls, aKey);
-}
-
-std::vector<value>
-apply_rules(
+void
+unsafe_apply_rule_(
 	acontext& aCtx,
-	const rule_cls& aCls,
-	const std::vector<key>& Keys
+	const untyped_rule_cls& aCls,
+	const untyped_key& aKey
 	)
 {
-	std::vector<value> values;
+	unsafe_apply_rule(aCtx, aCls, aKey);
+}
+
+std::vector<untyped_value>
+unsafe_apply_rules(
+	acontext& aCtx,
+	const untyped_rule_cls& aCls,
+	const std::vector<untyped_key>& Keys
+	)
+{
+	std::vector<untyped_value> values;
 	// @todo: redesign with staunch mode
-	for (const key& k : Keys)
-		values.push_back(apply_rule(aCtx, aCls, k));
+	for (const untyped_key& k : Keys)
+		values.push_back(unsafe_apply_rule(aCtx, aCls, k));
 	return (values);
 }
 
 void
-apply_rules_(
+unsafe_apply_rules_(
 	acontext& aCtx,
-	const rule_cls& aCls,
-	const std::vector<key>& Keys
+	const untyped_rule_cls& aCls,
+	const std::vector<untyped_key>& Keys
 	)
 {
-	for (const key& k : Keys)
-		apply_rule_(aCtx, aCls, k);
+	for (const untyped_key& k : Keys)
+		unsafe_apply_rule_(aCtx, aCls, k);
 }
 
 }
