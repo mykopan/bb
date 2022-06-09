@@ -112,20 +112,29 @@ unsafe_apply_rule(
 		/* NOTREACHED */
 	}
 
-	aCtx.inprogress_keys.insert(ruleKey);
+	{
+		struct key_building_scope {
+			acontext&  ctx;
+			const Key& key;
 
-	try {
+			key_building_scope(acontext& aCtx, const Key& aKey)
+				: ctx(aCtx), key(aKey)
+			{
+				aCtx.inprogress_keys.insert(aKey);
+			}
+
+			~key_building_scope()
+			{
+				size_t nerases = ctx.inprogress_keys.erase(key);
+				assert(1 == nerases);
+				(void) nerases;
+			}
+		};
+
+		key_building_scope scope(aCtx, ruleKey);
 		const rule& r = _t_lookup_rule(aCtx, aCls, aKey);
 		retval = r.action(aCtx, aKey);
 	}
-	catch (...) {
-		size_t nerases = aCtx.inprogress_keys.erase(ruleKey);
-		assert(1 == nerases);
-		throw;
-	}
-
-	size_t nerases = aCtx.inprogress_keys.erase(ruleKey);
-	assert(1 == nerases);
 
 	return (retval);
 }
