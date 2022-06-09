@@ -12,6 +12,7 @@
 # include "bb/rule.hpp"
 # include <vector>
 # include <unordered_map>
+# include <unordered_set>
 # include <typeindex>
 
 /*******************************************************************************
@@ -70,21 +71,27 @@ struct rule {
 		const std::function<bool(const key&)>& aPred,
 		const std::function<value(acontext&, const key&)>& anAction
 		)
-		: predicate(aPred), action(anAction) {}
+		: predicate(aPred), action(anAction)
+	{}
+
 	std::function<bool(const key&)>             predicate;
 	std::function<value(acontext&, const key&)> action;
 };
 
 struct prule {
 	prule(int aPrio, const rule& aRule)
-		: priority(aPrio), rule(aRule) {}
+		: priority(aPrio), rule(aRule)
+	{}
+
 	int   priority;
 	rule  rule;
 };
 
 struct crule {
 	crule(const rule_cls& aCls, const std::vector<prule>& PRules)
-		: cls(aCls), prules(PRules) {}
+		: cls(aCls), prules(PRules)
+	{}
+
 	const rule_cls&     cls;
 	std::vector<prule>  prules;
 };
@@ -95,8 +102,19 @@ struct rules {
 };
 
 struct acontext {
-	const options& options;
-	const rules&   rules;
+	acontext(
+		const options& Options,
+		const rules& Rules,
+		std::unordered_set<Key>& InprogressKeys
+		)
+		: options(Options)
+		, rules(Rules)
+		, inprogress_keys(InprogressKeys)
+	{}
+
+	const options&            options;
+	const rules&              rules;
+	std::unordered_set<Key>&  inprogress_keys;
 };
 
 }

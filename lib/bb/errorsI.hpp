@@ -67,6 +67,12 @@ error_multiple_rules_match(
 	size_t aCount
 	);
 
+extern std::runtime_error
+error_rule_recursion(
+	const std::type_info& aTypeOfKey,
+	const std::string& aKey
+	);
+
 }
 
 #endif /* !defined(__BB_ERRORS_I_HPP__) */

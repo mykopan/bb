@@ -1,61 +1,71 @@
 
-CFLAGS=-Wall -Wextra -Ilib -Iinclude
-CXXFLAGS=-std=c++17
+CFLAGS = -Wall -Wextra -Ilib -Iinclude
+CXXFLAGS = -std=c++17
+LFLAGS = -Lbuild/lib -lstdc++
 
 .PHONY: all
-all: build/bb.a build/test
+all: build/lib/libbb.a build/bin/test
 
 build:
-	mkdir -p build
+	@mkdir -p build
 
-build/rules:
-	mkdir -p build/rules
+build/bin: | build
+	@mkdir -p build/bin
 
-build/test: build/bb.a examples/test.cxx | build
-	$(CC) $(CFLAGS) $(CXXFLAGS) -o build/test examples/test.cxx build/bb.a -lstdc++
+build/lib: | build
+	@mkdir -p build/lib
 
-BB_OBJS= \
-  build/args.cxx.o \
-  build/command.cxx.o \
-  build/errors.cxx.o \
-  build/log.cxx.o \
-  build/options.cxx.o \
-  build/rule.cxx.o \
-  build/rules.cxx.o \
-  build/run.cxx.o \
-	build/rules/start.cxx.o \
-	build/rules/file.cxx.o
+build/inter: | build
+	@mkdir -p build/inter
 
-build/bb.a : $(BB_OBJS) | build
-	$(AR) -rc build/bb.a $(BB_OBJS)
+###############################################################################
+# generic
 
-build/args.cxx.o : lib/args.cxx | build
-	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/args.cxx.o lib/args.cxx
+define bb_compile
+$(2)/$(1).o: $(1) | $(dir $(2)/$(1))
+	@echo "# compiling ( $$<, $$@ )"
+	@$(CC) $(CFLAGS) $(CXXFLAGS) -c -o $$@ $$< -MMD -MF $$@.d
+-include $(2)/$(1).o.d
+endef
 
-build/command.cxx.o : lib/command.cxx | build
-	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/command.cxx.o lib/command.cxx
+###############################################################################
+# libbb.a
 
-build/errors.cxx.o : lib/errors.cxx | build
-	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/errors.cxx.o lib/errors.cxx
+BB_ARCHIVE_INTER_DIR = build/inter/bb.archive
+BB_ARCHIVE_SRCS = $(shell find lib -type f -name "*.cxx")
+BB_ARCHIVE_OBJS = $(foreach src,$(BB_ARCHIVE_SRCS),$(BB_ARCHIVE_INTER_DIR)/$(src).o)
 
-build/log.cxx.o : lib/log.cxx | build
-	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/log.cxx.o lib/log.cxx
+$(BB_ARCHIVE_INTER_DIR): | $(dir $(BB_ARCHIVE_INTER_DIR))
+	@mkdir -p $@
 
-build/options.cxx.o : lib/options.cxx | build
-	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/options.cxx.o lib/options.cxx
+$(BB_ARCHIVE_INTER_DIR)/lib: | $(BB_ARCHIVE_INTER_DIR)
+	@mkdir -p $@
 
-build/rule.cxx.o : lib/rule.cxx | build
-	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/rule.cxx.o lib/rule.cxx
+$(BB_ARCHIVE_INTER_DIR)/lib/rules: | $(BB_ARCHIVE_INTER_DIR)/lib
+	@mkdir -p $@
 
-build/rules.cxx.o : lib/rules.cxx | build
-	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/rules.cxx.o lib/rules.cxx
+$(foreach src,$(BB_ARCHIVE_SRCS),$(eval $(call bb_compile,$(src),$(BB_ARCHIVE_INTER_DIR))))
 
-build/run.cxx.o : lib/run.cxx | build
-	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/run.cxx.o lib/run.cxx
+build/lib/libbb.a: $(BB_ARCHIVE_OBJS) | build/lib
+	@echo "# archiving ( $@ )"
+	@$(AR) -rc $@ $(BB_ARCHIVE_OBJS)
 
-build/rules/start.cxx.o : lib/rules/start.cxx | build/rules
-	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/rules/start.cxx.o lib/rules/start.cxx
+###############################################################################
+# test
 
-build/rules/file.cxx.o : lib/rules/file.cxx | build/rules
-	$(CC) $(CFLAGS) $(CXXFLAGS) -c -o build/rules/file.cxx.o lib/rules/file.cxx
+BB_TEST_INTER_DIR = build/inter/test.prog
+BB_TEST_SRCS = $(shell find test -type f -name "*.cxx")
+BB_TEST_OBJS = $(foreach src,$(BB_TEST_SRCS),$(BB_TEST_INTER_DIR)/$(src).o)
+
+$(BB_TEST_INTER_DIR): | $(dir $(BB_TEST_INTER_DIR))
+	@mkdir -p $(BB_TEST_INTER_DIR)
+
+$(BB_TEST_INTER_DIR)/test: | $(BB_TEST_INTER_DIR)
+	@mkdir -p $(BB_TEST_INTER_DIR)/test
+
+$(foreach src,$(BB_TEST_SRCS),$(eval $(call bb_compile,$(src),$(BB_TEST_INTER_DIR))))
+
+build/bin/test: $(BB_TEST_OBJS) build/lib/libbb.a | build/bin
+	@echo "# linking ( $@ )"
+	@$(CC) $(CFLAGS) $(CXXFLAGS) $(LFLAGS) -o $@ $(BB_TEST_OBJS) -lbb
 

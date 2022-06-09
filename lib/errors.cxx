@@ -145,6 +145,20 @@ error_multiple_rules_match(
 			: "Modify your rules so only one can produce the above key");
 }
 
+std::runtime_error
+error_rule_recursion(
+	const std::type_info& aTypeOfKey,
+	const std::string& aKey
+	)
+{
+	return error_structured(
+		"Build system error - recursion detected",
+		{ { "Key type", aTypeOfKey.name() }
+		, { "Key value", aKey }
+		},
+		"Rules may not be recursive");
+}
+
 }
 
 /*******************************************************************************

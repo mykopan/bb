@@ -98,8 +98,31 @@ _t_lookup_rule(
 
 value apply_rule(acontext& aCtx, const rule_cls& aCls, const key& aKey)
 {
-	const rule& r = _t_lookup_rule(aCtx, aCls, aKey);
-	return r.action(aCtx, aKey);
+	value retval;
+
+	Key ruleKey(aCls.key_cls, aKey);
+	if (aCtx.inprogress_keys.count(ruleKey)) {
+		throw error_rule_recursion(aCls.key_cls.type_info,
+			aCls.key_cls.show(aKey));
+		/* NOTREACHED */
+	}
+
+	aCtx.inprogress_keys.insert(ruleKey);
+
+	try {
+		const rule& r = _t_lookup_rule(aCtx, aCls, aKey);
+		retval = r.action(aCtx, aKey);
+	}
+	catch (...) {
+		size_t nerases = aCtx.inprogress_keys.erase(ruleKey);
+		assert(1 == nerases);
+		throw;
+	}
+
+	size_t nerases = aCtx.inprogress_keys.erase(ruleKey);
+	assert(1 == nerases);
+
+	return (retval);
 }
 
 void apply_rule_(acontext& aCtx, const rule_cls& aCls, const key& aKey)

@@ -35,6 +35,7 @@ int run(const options& Options, const std::function<void(rules&)>& aRulesGen)
 	int nerrors = 0;
 	options canonOptions = Options;
 	rules rules;
+	std::unordered_set<Key> inprogressKeys;
 	std::mutex outputGuard;
 
 	canonOptions.output =
@@ -76,7 +77,7 @@ int run(const options& Options, const std::function<void(rules&)>& aRulesGen)
 
 	for (const auto& act : rules.actions) {
 		try {
-			acontext context = { canonOptions, rules };
+			acontext context(canonOptions, rules, inprogressKeys);
 			act(context);
 		}
 		catch (const std::exception& err) {
