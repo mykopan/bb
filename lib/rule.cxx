@@ -103,40 +103,37 @@ unsafe_apply_rule(
 	const untyped_key& aKey
 	)
 {
-	untyped_value retval;
+	struct key_building_scope {
+		acontext&               ctx;
+		const untyped_rule_cls& cls;
+		const untyped_key&      key;
 
-	Key ruleKey(aCls.key_cls, aKey);
-	if (aCtx.inprogress_keys.count(ruleKey)) {
-		throw error_rule_recursion(aCls.key_cls.type_info,
-			aCls.key_cls.show(aKey));
-		/* NOTREACHED */
-	}
-
-	{
-		struct key_building_scope {
-			acontext&  ctx;
-			const Key& key;
-
-			key_building_scope(acontext& aCtx, const Key& aKey)
-				: ctx(aCtx), key(aKey)
-			{
-				aCtx.inprogress_keys.insert(aKey);
+		key_building_scope(
+			acontext& aCtx,
+			const untyped_rule_cls& aCls,
+			const untyped_key& aKey
+			)
+			: ctx(aCtx), cls(aCls), key(aKey)
+		{
+			if (aCtx.inprogress_keys.count(Key(aCls.key_cls, aKey))) {
+				throw error_rule_recursion(aCls.key_cls.type_info,
+					aCls.key_cls.show(aKey));
+				/* NOTREACHED */
 			}
+			aCtx.inprogress_keys.insert(Key(aCls.key_cls, aKey));
+		}
 
-			~key_building_scope()
-			{
-				size_t nerases = ctx.inprogress_keys.erase(key);
-				assert(1 == nerases);
-				(void) nerases;
-			}
-		};
+		~key_building_scope()
+		{
+			size_t nerases = ctx.inprogress_keys.erase(Key(cls.key_cls, key));
+			assert(1 == nerases);
+			(void) nerases;
+		}
+	};
 
-		key_building_scope scope(aCtx, ruleKey);
-		const rule& r = _t_lookup_rule(aCtx, aCls, aKey);
-		retval = r.action(aCtx, aKey);
-	}
-
-	return (retval);
+	key_building_scope scope(aCtx, aCls, aKey);
+	const rule& r = _t_lookup_rule(aCtx, aCls, aKey);
+	return r.action(aCtx, aKey);
 }
 
 void
