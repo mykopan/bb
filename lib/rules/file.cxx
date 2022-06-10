@@ -24,41 +24,41 @@ struct fileQ {
 	filepath file_path;
 };
 
-static const object_cls<fileQ> _S_fileQ_cls = {
-	.show = [](const object<fileQ>& aFileQ) {
+static const object_cls<fileQ> _S_fileQ_cls(
+	[](const object<fileQ>& aFileQ) {
 		std::stringstream output;
 		output << "fileQ(" << std::quoted(aFileQ->file_path.string()) << ")";
 		return (output.str());
 	},
-	.hash = [](const object<fileQ>& aFileQ) {
+	[](const object<fileQ>& aFileQ) {
 		return std::hash<std::string>{}(aFileQ->file_path);
 	},
-	.equal = [](const object<fileQ>& aLhs, const object<fileQ>& aRhs) {
+	[](const object<fileQ>& aLhs, const object<fileQ>& aRhs) {
 		return (aLhs->file_path == aRhs->file_path);
 	}
-};
+);
 
 struct fileA {
 	fileA(fs::file_time_type x) : mtime(x) {}
 	fs::file_time_type mtime;
 };
 
-static const object_cls<fileA> _S_fileA_cls = {
-	.show = [](const object<fileA>& aFileA) {
+static const object_cls<fileA> _S_fileA_cls(
+	[](const object<fileA>& aFileA) {
 		(void) aFileA;
 		std::stringstream output;
 		output << "fileA(@todo-mtime)";
 		return (output.str());
 	},
-	.hash = [](const object<fileA>& aFileA) {
+	[](const object<fileA>& aFileA) {
 		(void) aFileA;
 		// return std::hash<fs::file_time_type>{}(fileValue->mtime);
 		return 0;
 	},
-	.equal = [](const object<fileA>& aLhs, const object<fileA>& aRhs) {
+	[](const object<fileA>& aLhs, const object<fileA>& aRhs) {
 		return (aLhs->mtime == aRhs->mtime);
 	}
-};
+);
 
 static const rule_cls<fileQ, fileA> _S_file_rule_cls = {
 	.key_cls = _S_fileQ_cls,

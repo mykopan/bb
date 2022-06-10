@@ -35,7 +35,7 @@ int run(const options& Options, const std::function<void(rules&)>& aRulesGen)
 	int nerrors = 0;
 	options canonOptions = Options;
 	rules rules;
-	std::unordered_set<Key> inprogressKeys;
+	std::unordered_set<dynamic_key> inprogressKeys;
 	std::mutex outputGuard;
 
 	canonOptions.output =

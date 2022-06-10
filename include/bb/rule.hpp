@@ -24,7 +24,16 @@ template<typename T> using value  = object<T>;
 
 template<typename T>
 struct object_cls {
-	const std::type_info&                                   type_info = typeid(T);
+	object_cls() = delete;
+	object_cls(
+		const std::function<std::string(const object<T>&)>& aShow,
+		const std::function<std::size_t(const object<T>&)>& aHash,
+		const std::function<bool(const object<T>&, const object<T>&)>& anEqual
+		)
+		: type_info(typeid(T)), show(aShow), hash(aHash), equal(anEqual)
+	{}
+
+	const std::type_info&                                   type_info;
 	std::function<std::string(const object<T>&)>            show;
 	std::function<std::size_t(const object<T>&)>            hash;
 	std::function<bool(const object<T>&, const object<T>&)> equal;

@@ -164,6 +164,21 @@ error_rule_recursion(
 		"Rules may not be recursive");
 }
 
+bb_exception::bb_exception(
+	const std::vector<std::string>& aStack,
+	const std::exception& anInnerException
+	)
+{
+	std::stringstream errmsg;
+
+	errmsg << "Error when running build system:" << std::endl;
+	for (const auto& key : aStack)
+		errmsg << "* " << key << std::endl;
+	errmsg << anInnerException.what();
+
+	this->errmsg = errmsg.str();
+}
+
 }
 
 /*******************************************************************************

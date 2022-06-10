@@ -21,11 +21,11 @@
 
 namespace bb {
 
-struct Object {
+struct dynamic_object {
 	const untyped_object_cls& cls;
 	untyped_object            obj;
 
-	Object(const untyped_object_cls& aCls, const untyped_object& anObj)
+	dynamic_object(const untyped_object_cls& aCls, const untyped_object& anObj)
 		: cls(aCls), obj(anObj) {}
 
 	inline const std::type_info& type_info() const
@@ -43,7 +43,7 @@ struct Object {
 		return cls.hash(obj);
 	}
 
-	inline bool operator== (const Object& aRhs) const
+	inline bool operator== (const dynamic_object& aRhs) const
 	{
 		return (type_info() == aRhs.type_info()
 			&& cls.equal(obj, aRhs.obj));
@@ -53,9 +53,9 @@ struct Object {
 }
 
 template<>
-struct std::hash<bb::Object>
+struct std::hash<bb::dynamic_object>
 {
-    inline std::size_t operator()(const bb::Object& x) const noexcept
+    inline std::size_t operator()(const bb::dynamic_object& x) const noexcept
     {
 		return x.hash();
     }
@@ -63,8 +63,8 @@ struct std::hash<bb::Object>
 
 namespace bb {
 
-typedef Object Key;
-typedef Object Value;
+typedef dynamic_object dynamic_key;
+typedef dynamic_object dynamic_value;
 
 struct rule {
 	rule(
@@ -105,16 +105,18 @@ struct acontext {
 	acontext(
 		const options& Options,
 		const rules& Rules,
-		std::unordered_set<Key>& InprogressKeys
+		std::unordered_set<dynamic_key>& InprogressKeys
 		)
 		: options(Options)
 		, rules(Rules)
 		, inprogress_keys(InprogressKeys)
+		, stack()
 	{}
 
-	const options&            options;
-	const rules&              rules;
-	std::unordered_set<Key>&  inprogress_keys;
+	const options&                    options;
+	const rules&                      rules;
+	std::unordered_set<dynamic_key>&  inprogress_keys;
+	std::vector<dynamic_key>          stack;
 };
 
 }

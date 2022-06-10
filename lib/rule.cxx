@@ -104,36 +104,54 @@ unsafe_apply_rule(
 	)
 {
 	struct key_building_scope {
-		acontext&               ctx;
-		const untyped_rule_cls& cls;
-		const untyped_key&      key;
+		acontext&               actx;
+		dynamic_key             key;
 
 		key_building_scope(
 			acontext& aCtx,
 			const untyped_rule_cls& aCls,
 			const untyped_key& aKey
 			)
-			: ctx(aCtx), cls(aCls), key(aKey)
+			: actx(aCtx), key(aCls.key_cls, aKey)
 		{
-			if (aCtx.inprogress_keys.count(Key(aCls.key_cls, aKey))) {
-				throw error_rule_recursion(aCls.key_cls.type_info,
-					aCls.key_cls.show(aKey));
+			if (actx.inprogress_keys.count(key)) {
+				throw error_rule_recursion(key.type_info(), key.show());
 				/* NOTREACHED */
 			}
-			aCtx.inprogress_keys.insert(Key(aCls.key_cls, aKey));
+			actx.inprogress_keys.insert(key);
+			actx.stack.push_back(key);
 		}
 
 		~key_building_scope()
 		{
-			size_t nerases = ctx.inprogress_keys.erase(Key(cls.key_cls, key));
+			assert(!actx.stack.empty());
+			actx.stack.pop_back();
+
+			size_t nerases = actx.inprogress_keys.erase(key);
 			assert(1 == nerases);
 			(void) nerases;
 		}
 	};
+	untyped_value retval;
 
 	key_building_scope scope(aCtx, aCls, aKey);
-	const rule& r = _t_lookup_rule(aCtx, aCls, aKey);
-	return r.action(aCtx, aKey);
+	try {
+		const rule& r = _t_lookup_rule(aCtx, aCls, aKey);
+		retval = r.action(aCtx, aKey);
+	}
+	catch (const bb_exception& err) {
+		throw;
+		/* NOTREACHED */
+	}
+	catch (const std::exception& err) {
+		std::vector<std::string> keys;
+		for (const auto& k : aCtx.stack)
+			keys.push_back(k.show());
+		throw bb_exception(keys, err);
+		/* NOTREACHED */
+	}
+
+	return (retval);
 }
 
 void
@@ -146,6 +164,34 @@ unsafe_apply_rule_(
 	unsafe_apply_rule(aCtx, aCls, aKey);
 }
 
+template<typename A, typename B>
+std::vector<B>
+forP(
+	acontext& aCtx,
+	const std::vector<A>& Inputs,
+	const std::function<B(acontext&, const A&)>& aMap
+	)
+{
+	std::vector<B> outputs;
+	// @todo: redesign with staunch mode
+	for (const A& input : Inputs)
+		outputs.push_back(aMap(aCtx, input));
+	return (outputs);
+}
+
+template<typename A>
+void
+forP_(
+	acontext& aCtx,
+	const std::vector<A>& Inputs,
+	const std::function<void(acontext&, const A&)>& aMap
+	)
+{
+	// @todo: redesign with staunch mode
+	for (const A& input : Inputs)
+		aMap(aCtx, input);
+}
+
 std::vector<untyped_value>
 unsafe_apply_rules(
 	acontext& aCtx,
@@ -153,11 +199,10 @@ unsafe_apply_rules(
 	const std::vector<untyped_key>& Keys
 	)
 {
-	std::vector<untyped_value> values;
-	// @todo: redesign with staunch mode
-	for (const untyped_key& k : Keys)
-		values.push_back(unsafe_apply_rule(aCtx, aCls, k));
-	return (values);
+	return forP<untyped_key, untyped_value>(aCtx, Keys,
+		[aCls](acontext& aCtx, const untyped_key& aKey) {
+			return unsafe_apply_rule(aCtx, aCls, aKey);
+		});
 }
 
 void
@@ -167,8 +212,10 @@ unsafe_apply_rules_(
 	const std::vector<untyped_key>& Keys
 	)
 {
-	for (const untyped_key& k : Keys)
-		unsafe_apply_rule_(aCtx, aCls, k);
+	return forP_<untyped_key>(aCtx, Keys,
+		[aCls](acontext& aCtx, const untyped_key& aKey) {
+			unsafe_apply_rule_(aCtx, aCls, aKey);
+		});
 }
 
 }

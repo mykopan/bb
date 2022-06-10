@@ -17,7 +17,7 @@
 # include <vector>
 
 /*******************************************************************************
- * %% BeginSection: type/constant declarations
+ * %% BeginSection: function declarations
  */
 
 namespace bb {
@@ -72,6 +72,18 @@ error_rule_recursion(
 	const std::type_info& aTypeOfKey,
 	const std::string& aKey
 	);
+
+struct bb_exception : public std::exception
+{
+	bb_exception(const std::vector<std::string>&, const std::exception&);
+	const char* what() const noexcept override
+	{
+		return errmsg.c_str();
+	}
+
+private:
+	std::string errmsg;
+};
 
 }
 
