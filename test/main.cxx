@@ -172,6 +172,5 @@ int main(int argc, char *argv[])
 	test_error_no_rule_to_build_type();
 	test_error_no_rule();
 	test_error_recursion();
-	test_file_pattern();
 }
 
