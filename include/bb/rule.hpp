@@ -47,8 +47,8 @@ struct rule_cls {
 
 
 using untyped_object     = object<void>;
-using untyped_key        = object<void>;
-using untyped_value      = object<void>;
+using untyped_key        = key<void>;
+using untyped_value      = value<void>;
 using untyped_object_cls = object_cls<void>;
 using untyped_rule_cls   = rule_cls<void, void>;
 

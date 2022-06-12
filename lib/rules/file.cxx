@@ -153,35 +153,6 @@ file(
 		});
 }
 
-static bool is_subset(const char* aPath, char const* aPattern)
-{
-	for (;;) {
-		switch (*aPattern) {
-		case '\0':
-			return '\0' == *aPath;
-		case '*': // (* -> x* | x != PATH_SEP) || (* ->)
-			return ('\0' != *aPath && '/' != *aPath && '\\' != *aPath
-					&& is_subset(aPath + 1, aPattern))
-				|| is_subset(aPath, aPattern + 1);
-		case '/':
-			if ('/' != *aPath && '\\' != *aPath)
-				return false;
-			++aPath, ++aPattern;
-			break;
-		default:
-			if (*aPath != *aPattern)
-				return false;
-			++aPath, ++aPattern;
-			break;
-		}
-	}
-}
-
-bool is_subset_fpattern(const filepath& aPath, const fpattern& aPattern)
-{
-	return is_subset(aPath.c_str(), aPattern.c_str());
-}
-
 }
 
 /*******************************************************************************
