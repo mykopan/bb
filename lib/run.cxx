@@ -35,7 +35,6 @@ int run(const options& Options, const std::function<void(rules&)>& aRulesGen)
 	int nerrors = 0;
 	options canonOptions = Options;
 	rules rules;
-	std::unordered_set<dynamic_key> inprogressKeys;
 	std::mutex outputGuard;
 
 	canonOptions.output =
@@ -75,9 +74,10 @@ int run(const options& Options, const std::function<void(rules&)>& aRulesGen)
 
 	_t_sort_rules(rules);
 
+	benv buildEnv(canonOptions, rules);
 	for (const auto& act : rules.actions) {
 		try {
-			acontext context(canonOptions, rules, inprogressKeys);
+			acontext context(buildEnv);
 			act(context);
 		}
 		catch (const std::exception& err) {

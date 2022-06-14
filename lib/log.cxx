@@ -14,22 +14,22 @@ namespace bb {
 
 void verbose(acontext& aCtx, const std::string& aMsg)
 {
-	aCtx.options.output(VERBOSE, aMsg);
+	aCtx.benv.options.output(VERBOSE, aMsg);
 }
 
 void info(acontext& aCtx, const std::string& aMsg)
 {
-	aCtx.options.output(INFO, aMsg);
+	aCtx.benv.options.output(INFO, aMsg);
 }
 
 void warn(acontext& aCtx, const std::string& aMsg)
 {
-	aCtx.options.output(WARN, aMsg);
+	aCtx.benv.options.output(WARN, aMsg);
 }
 
 void error(acontext& aCtx, const std::string& aMsg)
 {
-	aCtx.options.output(ERROR, aMsg);
+	aCtx.benv.options.output(ERROR, aMsg);
 }
 
 }

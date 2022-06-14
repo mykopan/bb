@@ -49,8 +49,8 @@ _t_lookup_rule(
 	const untyped_key& aKey
 	)
 {
-	auto iter = aCtx.rules.crules.find(aCls.key_cls.type_info);
-	if (aCtx.rules.crules.end() == iter) {
+	auto iter = aCtx.benv.rules.crules.find(aCls.key_cls.type_info);
+	if (aCtx.benv.rules.crules.end() == iter) {
 		throw error_no_rule_to_build_type(aCls.key_cls.type_info,
 			aCls.key_cls.show(aKey), aCls.value_cls.type_info);
 		/* NOTREACHED */
@@ -114,11 +114,17 @@ unsafe_apply_rule(
 			)
 			: actx(aCtx), key(aCls.key_cls, aKey)
 		{
-			if (actx.inprogress_keys.count(key)) {
+			bool recursion;
+			{
+				std::unique_lock lock(actx.benv.inprogress_keys_mutex);
+				if (!(recursion = !!actx.benv.inprogress_keys.count(key)))
+					actx.benv.inprogress_keys.insert(key);
+			}
+			if (recursion) {
 				throw error_rule_recursion(key.type_info(), key.show());
 				/* NOTREACHED */
 			}
-			actx.inprogress_keys.insert(key);
+
 			actx.stack.push_back(key);
 		}
 
@@ -127,7 +133,11 @@ unsafe_apply_rule(
 			assert(!actx.stack.empty());
 			actx.stack.pop_back();
 
-			size_t nerases = actx.inprogress_keys.erase(key);
+			size_t nerases;
+			{
+				std::unique_lock lock(actx.benv.inprogress_keys_mutex);
+				nerases = actx.benv.inprogress_keys.erase(key);
+			}
 			assert(1 == nerases);
 			(void) nerases;
 		}

@@ -10,10 +10,11 @@
 
 # include "bb/types.hpp"
 # include "bb/rule.hpp"
-# include <vector>
+# include <mutex>
+# include <typeindex>
 # include <unordered_map>
 # include <unordered_set>
-# include <typeindex>
+# include <vector>
 
 /*******************************************************************************
  * %% BeginSection: type/constant declarations
@@ -101,22 +102,29 @@ struct rules {
 	std::unordered_map<std::type_index, crule>    crules;
 };
 
-struct acontext {
-	acontext(
-		const options& Options,
-		const rules& Rules,
-		std::unordered_set<dynamic_key>& InprogressKeys
-		)
+struct benv {
+	benv(const options& Options, const rules& Rules)
 		: options(Options)
 		, rules(Rules)
-		, inprogress_keys(InprogressKeys)
-		, stack()
+		, inprogress_keys()
 	{}
 
 	const options&                    options;
 	const rules&                      rules;
-	std::unordered_set<dynamic_key>&  inprogress_keys;
-	std::vector<dynamic_key>          stack;
+	std::unordered_set<dynamic_key>   inprogress_keys;
+	std::mutex                        inprogress_keys_mutex;
+};
+
+struct acontext {
+	explicit acontext(benv& anEnv)
+		: benv(anEnv), stack()
+	{}
+	explicit acontext(benv& anEnv, const std::vector<dynamic_key>& aStack)
+		: benv(anEnv), stack(aStack)
+	{}
+
+	benv&                     benv;
+	std::vector<dynamic_key>  stack;
 };
 
 }
