@@ -4,17 +4,19 @@
  */
 
 #include "bb/rules/file.hpp"
-#include <string_view>
 #include <optional>
+#include <string_view>
 #include <variant>
 
-#include <iostream>
+// #define _DEBUG_FPATTERN
+
+#ifdef _DEBUG_FPATTERN
+# include <iostream>
+#endif
 
 /*******************************************************************************
  * %% BeginSection: function definitions
  */
-
-// #define _DEBUG_FPATTERN
 
 namespace bb {
 

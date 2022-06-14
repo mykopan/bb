@@ -1,5 +1,5 @@
 
-CFLAGS = -Wall -Wextra -Ilib -Iinclude
+CFLAGS = -O2 -Wall -Wextra -Ilib -Iinclude
 CXXFLAGS = -std=c++17
 LFLAGS = -Lbuild/lib -lstdc++
 
@@ -43,5 +43,5 @@ $(foreach src,$(BB_TEST_SRCS),$(eval $(call bb_compile,$(src),$(BB_TEST_INTER_DI
 build/bin/test: $(BB_TEST_OBJS) build/lib/libbb.a
 	@mkdir -p $(dir $@)
 	@echo "# linking ( $@ )"
-	@$(CC) $(CFLAGS) $(CXXFLAGS) $(LFLAGS) -o $@ $(BB_TEST_OBJS) -lbb
+	@$(CC) $(CFLAGS) -Ilib $(CXXFLAGS) $(LFLAGS) -o $@ $(BB_TEST_OBJS) -lbb
 
