@@ -11,6 +11,7 @@
 # include <bb/types.hpp>
 # include <functional>
 # include <memory>
+# include <vector>
 
 /*******************************************************************************
  * %% BeginSection: function declarations
@@ -18,57 +19,50 @@
 
 namespace bb {
 
-template<typename T> using object = std::shared_ptr<T>;
-template<typename T> using key    = object<T>;
-template<typename T> using value  = object<T>;
-
 template<typename T>
 struct object_cls {
-	object_cls() = delete;
-	object_cls(
-		const std::function<std::string(const object<T>&)>& aShow,
-		const std::function<std::size_t(const object<T>&)>& aHash,
-		const std::function<bool(const object<T>&, const object<T>&)>& anEqual
-		)
-		: type_info(typeid(T)), show(aShow), hash(aHash), equal(anEqual)
-	{}
-
-	const std::type_info&                                   type_info;
-	std::function<std::string(const object<T>&)>            show;
-	std::function<std::size_t(const object<T>&)>            hash;
-	std::function<bool(const object<T>&, const object<T>&)> equal;
+	const std::type_info&                   type_info = typeid(T);
+	std::function<std::string(const T&)>    show;
+	std::function<std::size_t(const T&)>    hash;
+	std::function<bool(const T&, const T&)> equal;
 };
 
-template<typename K, typename V>
+template<typename Key, typename Value>
 struct rule_cls {
-	const object_cls<K>& key_cls;
-	const object_cls<V>& value_cls;
+	object_cls<Key>   key_cls;
+	object_cls<Value> value_cls;
 };
 
+template<typename Key, typename Value>
+void
+add_rule(
+	rules& Rules,
+	int aPrio,
+	const std::function<bool(const Key&)>& aPred,
+	const std::function<Value(acontext&, const Key&)>& anAction
+	);
 
-using untyped_object     = object<void>;
-using untyped_key        = key<void>;
-using untyped_value      = value<void>;
-using untyped_object_cls = object_cls<void>;
-using untyped_rule_cls   = rule_cls<void, void>;
+template<typename Key, typename Value>
+std::vector<Value> apply_rules(acontext&, const std::vector<Key>&);
 
-template<typename T>
-const untyped_object& to_untyped_object(const object<T>& aCls)
-{
-	return reinterpret_cast< const untyped_object& >(aCls);
-}
+template<typename Key, typename Value>
+void apply_rules_(acontext&, const std::vector<Key>&);
 
-template<typename T>
-const untyped_object_cls& to_untyped_object_cls(const object_cls<T>& aCls)
-{
-	return reinterpret_cast< const untyped_object_cls& >(aCls);
-}
+template<typename Key, typename Value>
+Value apply_rule(acontext&, const Key&);
 
-template<typename K, typename V>
-const untyped_rule_cls& to_untyped_rule_cls(const rule_cls<K, V>& aCls)
-{
-	return reinterpret_cast< const untyped_rule_cls& >(aCls);
-}
+template<typename Key, typename Value>
+void apply_rule_(acontext&, const Key&);
+
+/*******************************************************************************
+ * %% BeginSection: definitions
+ */
+
+using untyped_object     = std::shared_ptr<void>;
+using untyped_key        = untyped_object;
+using untyped_value      = untyped_object;
+using untyped_object_cls = object_cls<untyped_object>;
+using untyped_rule_cls   = rule_cls<untyped_key, untyped_value>;
 
 extern void
 unsafe_add_rule(
@@ -107,68 +101,127 @@ unsafe_apply_rule_(
 	const untyped_key&
 	);
 
-
-template<typename K, typename V>
+template<typename Key, typename Value>
 void
 add_rule(
 	rules& Rules,
-	const rule_cls<K, V>& aCls,
 	int aPrio,
-	const std::function<bool(const key<K>&)>& aPred,
-	const std::function<value<V>(acontext&, const key<K>&)>& anAction
+	const std::function<bool(const Key&)>& aPred,
+	const std::function<Value(acontext&, const Key&)>& anAction
 	)
 {
-	unsafe_add_rule(Rules, to_untyped_rule_cls(aCls), aPrio,
-		reinterpret_cast< const std::function<bool(const untyped_key&)>& >(aPred),
-		reinterpret_cast< const std::function<untyped_value(acontext&, const untyped_key&)>& >(anAction));
+	const untyped_rule_cls& cls = untyped_rule_cls_instance(
+		static_cast<const Key *>(nullptr),
+		static_cast<const Value *>(nullptr));
+
+	unsafe_add_rule(Rules, cls, aPrio,
+		[aPred](const untyped_key& aKey) {
+			return aPred(*std::static_pointer_cast<Key, void>(aKey));
+		},
+		[anAction](acontext& aCtx, const untyped_key& aKey) {
+			return std::static_pointer_cast<void, Value>(
+				std::make_shared<Value>(anAction(aCtx,
+					*std::static_pointer_cast<Key, void>(aKey))));
+		});
 }
 
-template<typename K, typename V>
-std::vector< value<V> >
-apply_rules(
-	acontext& aCtx,
-	const rule_cls<K, V>& aCls,
-	const std::vector< key<K> >& Keys
-	)
+template<typename Key, typename Value>
+std::vector<Value> apply_rules(acontext& aCtx, const std::vector<Key>& Keys)
 {
-	return unsafe_apply_rules(aCtx, to_untyped_rule_cls(aCls),
-		reinterpret_cast< const std::vector<untyped_key>& >(Keys));
+	const untyped_rule_cls& cls = untyped_rule_cls_instance(
+		static_cast<const Key *>(nullptr),
+		static_cast<const Value *>(nullptr));
+
+	std::vector<untyped_key> untypedKeys;
+	for (const Key& k : Keys) {
+		untypedKeys.push_back(
+			std::static_pointer_cast<void, Key>(std::make_shared<Key>(k)));
+	}
+
+	std::vector<untyped_value> untypedValues =
+		unsafe_apply_rules(aCtx, cls, untypedKeys);
+
+	std::vector<Value> values;
+	for (const untyped_value& untypedValue : untypedValues)
+		values.push_back(*std::static_pointer_cast<Value, void>(untypedValue));
+	return values;
 }
 
-template<typename K, typename V>
-void
-apply_rules_(
-	acontext& aCtx,
-	const rule_cls<K, V>& aCls,
-	const std::vector< key<K> >& Keys
-	)
+template<typename Key, typename Value>
+void apply_rules_(acontext& aCtx, const std::vector<Key>& Keys)
 {
-	unsafe_apply_rules_(aCtx, to_untyped_rule_cls(aCls),
-		reinterpret_cast< const std::vector<untyped_key>& >(Keys));
+	const untyped_rule_cls& cls = untyped_rule_cls_instance(
+		static_cast<const Key *>(nullptr),
+		static_cast<const Value *>(nullptr));
+
+	std::vector<untyped_key> untypedKeys;
+	for (const Key& k : Keys) {
+		untypedKeys.push_back(
+			std::static_pointer_cast<void, Key>(std::make_shared<Key>(k)));
+	}
+	unsafe_apply_rules_(aCtx, cls, untypedKeys);
 }
 
-template<typename K, typename V>
-value<V>
-apply_rule(
-	acontext& aCtx,
-	const rule_cls<K, V>& aCls,
-	const key<K>& aKey
-	)
+template<typename Key, typename Value>
+Value apply_rule(acontext& aCtx, const Key& aKey)
 {
-	return unsafe_apply_rule(aCtx, to_untyped_rule_cls(aCls),
-		reinterpret_cast< const untyped_key& >(aKey));
+	const untyped_rule_cls& cls = untyped_rule_cls_instance(
+		static_cast<const Key *>(nullptr),
+		static_cast<const Value *>(nullptr));
+
+	untyped_key untypedKey =
+		std::static_pointer_cast<void, Key>(std::make_shared<Key>(aKey));
+	untyped_value untypedValue = unsafe_apply_rule(aCtx, cls, untypedKey);
+	return *std::static_pointer_cast<Value, void>(untypedValue);
 }
 
-template<typename K, typename V>
-void
-apply_rule_(
-	acontext& aCtx,
-	const rule_cls<K, V>& aCls,
-	const key<K>& aKey
-	)
+template<typename Key, typename Value>
+void apply_rule_(acontext& aCtx, const Key& aKey)
 {
-	unsafe_apply_rule_(aCtx, to_untyped_rule_cls(aCls),
-		reinterpret_cast< const untyped_key& >(aKey));
+	const untyped_rule_cls& cls = untyped_rule_cls_instance(
+		static_cast<const Key *>(nullptr),
+		static_cast<const Value *>(nullptr));
+
+	untyped_key untypedKey =
+		std::static_pointer_cast<void, Key>(std::make_shared<Key>(aKey));
+	unsafe_apply_rule_(aCtx, cls, untypedKey);
+}
+
+/*******************************************************************************
+ * %% BeginSection: helpers
+ */
+
+template<typename T>
+untyped_object_cls to_untyped_object_cls(const object_cls<T>& aCls)
+{
+	return untyped_object_cls {
+		.type_info = aCls.type_info,
+		.show = [aCls](const untyped_object& anObj) {
+			return aCls.show(*std::static_pointer_cast<T, void>(anObj));
+		},
+		.hash = [aCls](const untyped_object& anObj) {
+			return aCls.hash(*std::static_pointer_cast<T, void>(anObj));
+		},
+		.equal = [aCls](const untyped_object& aLhs, const untyped_object& aRhs) {
+			return aCls.equal(*std::static_pointer_cast<T, void>(aLhs),
+				*std::static_pointer_cast<T, void>(aRhs));
+		}
+	};
+}
+
+template<typename Key, typename Value>
+const untyped_rule_cls& untyped_rule_cls_instance(const Key* k, const Value* v)
+{
+	const rule_cls<Key, Value>& ruleCls = rule_cls_instance(k, v);
+	static const untyped_object_cls untypedKeyCls =
+		to_untyped_object_cls(ruleCls.key_cls);
+	static const untyped_object_cls untypedValueCls =
+		to_untyped_object_cls(ruleCls.value_cls);
+	static const untyped_rule_cls untypedRuleCls = {
+		.key_cls = untypedKeyCls,
+		.value_cls = untypedValueCls
+	};
+	return untypedRuleCls;
 }
 
 }

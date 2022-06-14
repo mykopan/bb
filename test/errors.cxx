@@ -4,7 +4,7 @@
 
 struct Dummy {
 	int x;
-	bool operator== (const Dummy& o) { return (x == o.x); }
+	inline bool operator== (const Dummy& o) const { return x == o.x; }
 };
 
 namespace std {
@@ -19,31 +19,38 @@ struct std::hash<Dummy>
 
 }
 
-template<typename T>
-bb::object_cls<T> make_default_cls()
+static const bb::object_cls<Dummy>& object_cls_instance(const Dummy*)
 {
-	return bb::object_cls<T>(
-		[](const bb::object<T>& x) { return std::to_string(*x); },
-		[](const bb::object<T>& x) { return std::hash<T>()(*x); },
-		[](const bb::object<T>& x, const bb::object<T>& y) { return (*x == *y); }
-	);
+	static const bb::object_cls<Dummy> cls = {
+		.show = [](const Dummy& x) { return std::to_string(x); },
+		.hash = [](const Dummy& x) { return std::hash<Dummy>()(x); },
+		.equal = [](const Dummy& x, const Dummy& y) { return x == y; }
+	};
+	return cls;
 }
 
-static bb::object_cls<Dummy> dummy_cls = make_default_cls<Dummy>();
-static bb::rule_cls<Dummy, Dummy> dummy_rcls = { dummy_cls, dummy_cls };
+static const bb::rule_cls<Dummy, Dummy>& rule_cls_instance(const Dummy* k, const Dummy* v)
+{
+	static const bb::rule_cls<Dummy, Dummy> cls = {
+		.key_cls = object_cls_instance(k),
+		.value_cls = object_cls_instance(v)
+	};
+	return cls;
+}
 
-void test_error_no_rule_to_build_type()
+using bb::untyped_rule_cls_instance;
+
+static void test_error_no_rule_to_build_type()
 {
 	int ecode = bb::run(bb::default_options, [](bb::rules& Rules) {
 		bb::action(Rules, [](bb::acontext& aCtx) {
-			bb::apply_rule_<Dummy, Dummy>(aCtx, dummy_rcls,
-				std::make_shared<Dummy>(Dummy{1}));
+			bb::apply_rule_<Dummy, Dummy>(aCtx, Dummy{1});
 		});
 	});
 	assert(0 < ecode);
 }
 
-void test_error_no_rule()
+static void test_error_no_rule()
 {
 	int ecode = bb::run(bb::default_options, [](bb::rules& Rules) {
 		bb::want(Rules, { bb::filepath("build") / "foo" });
@@ -51,7 +58,7 @@ void test_error_no_rule()
 	assert(0 < ecode);
 }
 
-void test_error_recursion()
+static void test_error_recursion()
 {
 	int ecode = bb::run(bb::default_options, [](bb::rules& Rules) {
 		bb::want(Rules, { bb::filepath("build") / "foo" });
@@ -66,5 +73,12 @@ void test_error_recursion()
 		});
 	});
 	assert(0 < ecode);
+}
+
+void test_errors()
+{
+	test_error_no_rule_to_build_type();
+	test_error_no_rule();
+	test_error_recursion();
 }
 
