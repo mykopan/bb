@@ -10,6 +10,7 @@
 
 # include "bb/types.hpp"
 # include "bb/rule.hpp"
+# include "bb/general/asyncI.hpp"
 # include <mutex>
 # include <typeindex>
 # include <unordered_map>

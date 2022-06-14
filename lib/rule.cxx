@@ -210,7 +210,7 @@ unsafe_apply_rules(
 	)
 {
 	return forP<untyped_key, untyped_value>(aCtx, Keys,
-		[aCls](acontext& aCtx, const untyped_key& aKey) {
+		[&aCls](acontext& aCtx, const untyped_key& aKey) {
 			return unsafe_apply_rule(aCtx, aCls, aKey);
 		});
 }
@@ -223,7 +223,7 @@ unsafe_apply_rules_(
 	)
 {
 	return forP_<untyped_key>(aCtx, Keys,
-		[aCls](acontext& aCtx, const untyped_key& aKey) {
+		[&aCls](acontext& aCtx, const untyped_key& aKey) {
 			unsafe_apply_rule_(aCtx, aCls, aKey);
 		});
 }

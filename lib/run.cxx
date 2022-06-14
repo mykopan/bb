@@ -30,68 +30,55 @@ static void _t_sort_rules(rules& Rules)
 	}
 }
 
-int run(const options& Options, const std::function<void(rules&)>& aRulesGen)
+static int
+_t_run(const options& Options, const std::function<void(rules&)>& aRulesGen)
 {
-	int nerrors = 0;
-	options canonOptions = Options;
 	rules rules;
-	std::mutex outputGuard;
-
-	canonOptions.output =
-		[ requiredVerbosity = Options.verbosity, &output = Options.output
-		, &outputGuard
-		]
-		(verbosity aVerbosity, const std::string& aMsg) mutable
-		{
-			if (aVerbosity <= requiredVerbosity) {
-				std::unique_lock lock(outputGuard);
-				output(aVerbosity, aMsg);
-			}
-		};
 
 	try {
 		_t_default_rules(rules);
 		aRulesGen(rules);
 	}
 	catch (const std::exception& err) {
-		canonOptions.output(ERROR, err.what());
+		Options.output(ERROR, err.what());
 		return 1;
 		/* NOTREACHED */
 	}
 	catch (...) {
-		canonOptions.output(ERROR,
-			"Error: caught unknown type of exception while generating build rules");
+		Options.output(ERROR, "Error: caught unknown type of exception while"
+			" generating build rules");
 		return 1;
 		/* NOTREACHED */
 	}
 
 	if (rules.actions.empty()) {
-		canonOptions.output(INFO,
+		Options.output(INFO,
 			"Warning: no want/action statements, nothing to do");
-		return (0);
+		return 0;
 		/* NOTREACHED */
 	}
 
 	_t_sort_rules(rules);
 
-	benv buildEnv(canonOptions, rules);
+	benv buildEnv(Options, rules);
+	int nerrors = 0;
 	for (const auto& act : rules.actions) {
 		try {
 			acontext context(buildEnv);
 			act(context);
 		}
 		catch (const std::exception& err) {
-			canonOptions.output(ERROR, err.what());
-			if (!canonOptions.staunch) {
+			Options.output(ERROR, err.what());
+			if (!Options.staunch) {
 				return 1;
 				/* NOTREACHED */
 			}
 			++nerrors;
 		}
 		catch (...) {
-			canonOptions.output(ERROR,
+			Options.output(ERROR,
 				"Error: caught unknown type of exception while building");
-			if (!canonOptions.staunch) {
+			if (!Options.staunch) {
 				return 1;
 				/* NOTREACHED */
 			}
@@ -100,6 +87,24 @@ int run(const options& Options, const std::function<void(rules&)>& aRulesGen)
 	}
 
 	return nerrors;
+}
+
+int run(const options& Options, const std::function<void(rules&)>& aRulesGen)
+{
+	options canon = Options;
+	std::mutex outputMutex;
+
+	canon.nthreads = (0 == Options.nthreads ? get_num_capabilities()
+	                                        : Options.nthreads);
+	canon.output = [&Options, &outputMutex]
+		(verbosity aVerbosity, const std::string& aMsg)
+		{
+			if (aVerbosity <= Options.verbosity) {
+				std::unique_lock lock(outputMutex);
+				Options.output(aVerbosity, aMsg);
+			}
+		};
+	return _t_run(canon, aRulesGen);
 }
 
 }

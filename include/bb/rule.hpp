@@ -196,13 +196,13 @@ untyped_object_cls to_untyped_object_cls(const object_cls<T>& aCls)
 {
 	return untyped_object_cls {
 		.type_info = aCls.type_info,
-		.show = [aCls](const untyped_object& anObj) {
+		.show = [&aCls](const untyped_object& anObj) {
 			return aCls.show(*std::static_pointer_cast<T, void>(anObj));
 		},
-		.hash = [aCls](const untyped_object& anObj) {
+		.hash = [&aCls](const untyped_object& anObj) {
 			return aCls.hash(*std::static_pointer_cast<T, void>(anObj));
 		},
-		.equal = [aCls](const untyped_object& aLhs, const untyped_object& aRhs) {
+		.equal = [&aCls](const untyped_object& aLhs, const untyped_object& aRhs) {
 			return aCls.equal(*std::static_pointer_cast<T, void>(aLhs),
 				*std::static_pointer_cast<T, void>(aRhs));
 		}
