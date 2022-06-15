@@ -4,7 +4,7 @@
 
 struct wint { int x; };
 
-static const bb::object_cls<wint>& object_cls_instance(const wint*)
+static const bb::object_cls<wint>& object_cls_instance(bb::proxy<wint>)
 {
 	static const bb::object_cls<wint> cls = {
 		.show = [](const wint& w) { return std::to_string(w.x); },
@@ -14,7 +14,8 @@ static const bb::object_cls<wint>& object_cls_instance(const wint*)
 	return cls;
 }
 
-static const bb::rule_cls<wint, wint>& rule_cls_instance(const wint* k, const wint* v)
+static const bb::rule_cls<wint, wint>&
+rule_cls_instance(bb::proxy<wint> k, bb::proxy<wint> v)
 {
 	static const bb::rule_cls<wint, wint> cls = {
 		.key_cls = object_cls_instance(k),

@@ -24,7 +24,7 @@ struct fileQ {
 	filepath file_path;
 };
 
-static const object_cls<fileQ>& object_cls_instance(const fileQ*)
+static const object_cls<fileQ>& object_cls_instance(proxy<fileQ>)
 {
 	static const object_cls<fileQ> cls = {
 		.show = [](const fileQ& aFileQ) {
@@ -47,7 +47,7 @@ struct fileA {
 	fs::file_time_type mtime;
 };
 
-static const object_cls<fileA>& object_cls_instance(const fileA*)
+static const object_cls<fileA>& object_cls_instance(proxy<fileA>)
 {
 	static const object_cls<fileA> cls = {
 		.show = [](const fileA& aFileA) {
@@ -68,7 +68,8 @@ static const object_cls<fileA>& object_cls_instance(const fileA*)
 	return cls;
 }
 
-static const rule_cls<fileQ, fileA>& rule_cls_instance(const fileQ* k, const fileA* v)
+static const rule_cls<fileQ, fileA>&
+rule_cls_instance(proxy<fileQ> k, proxy<fileA> v)
 {
 	static const rule_cls<fileQ, fileA> cls = {
 		.key_cls = object_cls_instance(k),

@@ -101,6 +101,9 @@ unsafe_apply_rule_(
 	const untyped_key&
 	);
 
+template<typename T>
+struct proxy{};
+
 template<typename Key, typename Value>
 void
 add_rule(
@@ -110,9 +113,8 @@ add_rule(
 	const std::function<Value(acontext&, const Key&)>& anAction
 	)
 {
-	const untyped_rule_cls& cls = untyped_rule_cls_instance(
-		static_cast<const Key *>(nullptr),
-		static_cast<const Value *>(nullptr));
+	const untyped_rule_cls& cls =
+		untyped_rule_cls_instance(proxy<Key>{}, proxy<Value>{});
 
 	unsafe_add_rule(Rules, cls, aPrio,
 		[aPred](const untyped_key& aKey) {
@@ -128,9 +130,8 @@ add_rule(
 template<typename Key, typename Value>
 std::vector<Value> apply_rules(acontext& aCtx, const std::vector<Key>& Keys)
 {
-	const untyped_rule_cls& cls = untyped_rule_cls_instance(
-		static_cast<const Key *>(nullptr),
-		static_cast<const Value *>(nullptr));
+	const untyped_rule_cls& cls =
+		untyped_rule_cls_instance(proxy<Key>{}, proxy<Value>{});
 
 	std::vector<untyped_key> untypedKeys;
 	for (const Key& k : Keys) {
@@ -150,9 +151,8 @@ std::vector<Value> apply_rules(acontext& aCtx, const std::vector<Key>& Keys)
 template<typename Key, typename Value>
 void apply_rules_(acontext& aCtx, const std::vector<Key>& Keys)
 {
-	const untyped_rule_cls& cls = untyped_rule_cls_instance(
-		static_cast<const Key *>(nullptr),
-		static_cast<const Value *>(nullptr));
+	const untyped_rule_cls& cls =
+		untyped_rule_cls_instance(proxy<Key>{}, proxy<Value>{});
 
 	std::vector<untyped_key> untypedKeys;
 	for (const Key& k : Keys) {
@@ -165,9 +165,8 @@ void apply_rules_(acontext& aCtx, const std::vector<Key>& Keys)
 template<typename Key, typename Value>
 Value apply_rule(acontext& aCtx, const Key& aKey)
 {
-	const untyped_rule_cls& cls = untyped_rule_cls_instance(
-		static_cast<const Key *>(nullptr),
-		static_cast<const Value *>(nullptr));
+	const untyped_rule_cls& cls =
+		untyped_rule_cls_instance(proxy<Key>{}, proxy<Value>{});
 
 	untyped_key untypedKey =
 		std::static_pointer_cast<void, Key>(std::make_shared<Key>(aKey));
@@ -178,9 +177,8 @@ Value apply_rule(acontext& aCtx, const Key& aKey)
 template<typename Key, typename Value>
 void apply_rule_(acontext& aCtx, const Key& aKey)
 {
-	const untyped_rule_cls& cls = untyped_rule_cls_instance(
-		static_cast<const Key *>(nullptr),
-		static_cast<const Value *>(nullptr));
+	const untyped_rule_cls& cls =
+		untyped_rule_cls_instance(proxy<Key>{}, proxy<Value>{});
 
 	untyped_key untypedKey =
 		std::static_pointer_cast<void, Key>(std::make_shared<Key>(aKey));
@@ -210,7 +208,7 @@ untyped_object_cls to_untyped_object_cls(const object_cls<T>& aCls)
 }
 
 template<typename Key, typename Value>
-const untyped_rule_cls& untyped_rule_cls_instance(const Key* k, const Value* v)
+const untyped_rule_cls& untyped_rule_cls_instance(proxy<Key> k, proxy<Value> v)
 {
 	const rule_cls<Key, Value>& ruleCls = rule_cls_instance(k, v);
 	static const untyped_object_cls untypedKeyCls =

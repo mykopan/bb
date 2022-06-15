@@ -19,7 +19,7 @@ struct std::hash<Dummy>
 
 }
 
-static const bb::object_cls<Dummy>& object_cls_instance(const Dummy*)
+static const bb::object_cls<Dummy>& object_cls_instance(bb::proxy<Dummy>)
 {
 	static const bb::object_cls<Dummy> cls = {
 		.show = [](const Dummy& x) { return std::to_string(x); },
@@ -29,7 +29,8 @@ static const bb::object_cls<Dummy>& object_cls_instance(const Dummy*)
 	return cls;
 }
 
-static const bb::rule_cls<Dummy, Dummy>& rule_cls_instance(const Dummy* k, const Dummy* v)
+static const bb::rule_cls<Dummy, Dummy>&
+rule_cls_instance(bb::proxy<Dummy> k, bb::proxy<Dummy> v)
 {
 	static const bb::rule_cls<Dummy, Dummy> cls = {
 		.key_cls = object_cls_instance(k),
