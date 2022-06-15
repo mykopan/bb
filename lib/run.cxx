@@ -4,6 +4,7 @@
  */
 
 #include "bb/typesI.hpp"
+#include "bb/parallelI.hpp"
 #include "bb/run.hpp"
 #include "bb/rules/file.hpp"
 #include <mutex>
@@ -61,29 +62,19 @@ _t_run(const options& Options, const std::function<void(rules&)>& aRulesGen)
 	_t_sort_rules(rules);
 
 	benv buildEnv(Options, rules);
+	acontext ctx(buildEnv);
 	int nerrors = 0;
-	for (const auto& act : rules.actions) {
-		try {
-			acontext context(buildEnv);
-			act(context);
-		}
-		catch (const std::exception& err) {
-			Options.output(ERROR, err.what());
-			if (!Options.staunch) {
-				return 1;
-				/* NOTREACHED */
-			}
-			++nerrors;
-		}
-		catch (...) {
-			Options.output(ERROR,
-				"Error: caught unknown type of exception while building");
-			if (!Options.staunch) {
-				return 1;
-				/* NOTREACHED */
-			}
-			++nerrors;
-		}
+	try {
+		sequenceP_<void>(ctx, rules.actions);
+	}
+	catch (const std::exception& err) {
+		Options.output(ERROR, err.what());
+		++nerrors;
+	}
+	catch (...) {
+		Options.output(ERROR,
+			"Error: caught unknown type of exception while building");
+		++nerrors;
 	}
 
 	return nerrors;
@@ -94,7 +85,7 @@ int run(const options& Options, const std::function<void(rules&)>& aRulesGen)
 	options canon = Options;
 	std::mutex outputMutex;
 
-	canon.nthreads = (0 == Options.nthreads ? get_num_capabilities()
+	canon.nthreads = (Options.nthreads <= 0 ? get_num_capabilities()
 	                                        : Options.nthreads);
 	canon.output = [&Options, &outputMutex]
 		(verbosity aVerbosity, const std::string& aMsg)

@@ -69,6 +69,8 @@ private:
 	std::shared_ptr<state> result;
 };
 
+struct unit {};
+
 template<typename T>
 async<T>::async(thread_pool& aPool, const std::function<T(void)>& anAction)
 	: pool(aPool), result(std::make_shared<state>(nothing{}))

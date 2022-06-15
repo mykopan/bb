@@ -4,6 +4,7 @@
  */
 
 #include "bb/errorsI.hpp"
+#include "bb/parallelI.hpp"
 #include "bb/rule.hpp"
 #include "bb/typesI.hpp"
 
@@ -115,11 +116,20 @@ unsafe_apply_rule(
 			: actx(aCtx), key(aCls.key_cls, aKey)
 		{
 			bool recursion;
+#if 0
 			{
 				std::unique_lock lock(actx.benv.inprogress_keys_mutex);
 				if (!(recursion = !!actx.benv.inprogress_keys.count(key)))
 					actx.benv.inprogress_keys.insert(key);
 			}
+#else
+			recursion = false;
+			for (const dynamic_key& k : aCtx.stack) {
+				recursion = k == key;
+				if (recursion)
+					break;
+			}
+#endif
 			if (recursion) {
 				throw error_rule_recursion(key.type_info(), key.show());
 				/* NOTREACHED */
@@ -132,7 +142,7 @@ unsafe_apply_rule(
 		{
 			assert(!actx.stack.empty());
 			actx.stack.pop_back();
-
+#if 0
 			size_t nerases;
 			{
 				std::unique_lock lock(actx.benv.inprogress_keys_mutex);
@@ -140,6 +150,7 @@ unsafe_apply_rule(
 			}
 			assert(1 == nerases);
 			(void) nerases;
+#endif
 		}
 	};
 	untyped_value retval;
@@ -172,34 +183,6 @@ unsafe_apply_rule_(
 	)
 {
 	unsafe_apply_rule(aCtx, aCls, aKey);
-}
-
-template<typename A, typename B>
-std::vector<B>
-forP(
-	acontext& aCtx,
-	const std::vector<A>& Inputs,
-	const std::function<B(acontext&, const A&)>& aMap
-	)
-{
-	std::vector<B> outputs;
-	// @todo: redesign with staunch mode
-	for (const A& input : Inputs)
-		outputs.push_back(aMap(aCtx, input));
-	return (outputs);
-}
-
-template<typename A>
-void
-forP_(
-	acontext& aCtx,
-	const std::vector<A>& Inputs,
-	const std::function<void(acontext&, const A&)>& aMap
-	)
-{
-	// @todo: redesign with staunch mode
-	for (const A& input : Inputs)
-		aMap(aCtx, input);
 }
 
 std::vector<untyped_value>

@@ -108,20 +108,24 @@ struct benv {
 		: options(Options)
 		, rules(Rules)
 		, inprogress_keys()
+		, pool(Options.nthreads - 1)
 	{}
 
 	const options&                    options;
 	const rules&                      rules;
 	std::unordered_set<dynamic_key>   inprogress_keys;
 	std::mutex                        inprogress_keys_mutex;
+	thread_pool                       pool;
 };
 
 struct acontext {
 	explicit acontext(benv& anEnv)
 		: benv(anEnv), stack()
 	{}
-	explicit acontext(benv& anEnv, const std::vector<dynamic_key>& aStack)
-		: benv(anEnv), stack(aStack)
+	// @todo: stack copying may be overhead,
+	// may need to use another stack representation
+	acontext(const acontext& aSrc)
+		: benv(aSrc.benv), stack(aSrc.stack)
 	{}
 
 	benv&                     benv;
