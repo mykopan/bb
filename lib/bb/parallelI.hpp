@@ -17,6 +17,41 @@
 
 namespace bb {
 
+struct exception_handler {
+	exception_handler() : prev_err() {}
+
+	inline void operator() (acontext& aCtx)
+	{
+		std::exception_ptr currErr = std::current_exception();
+		if (!aCtx.benv.options.staunch) {
+			std::rethrow_exception(currErr);
+			/* NOTREACHED */
+		}
+
+		if (prev_err) {
+			try {
+				std::rethrow_exception(prev_err);
+			}
+			catch (const std::exception& err) {
+				error(aCtx, err.what());
+			}
+		}
+		prev_err = currErr;
+	}
+
+	inline void finalize()
+	{
+		if (prev_err) {
+			std::rethrow_exception(prev_err);
+			/* NOTREACHED */
+		}
+	}
+
+private:
+	std::exception_ptr  prev_err;
+};
+
+
 template<typename A>
 void
 sequenceS_(
@@ -24,30 +59,17 @@ sequenceS_(
 	const std::vector< std::function<A(acontext&)> >& Actions
 	)
 {
-	std::exception_ptr eptr;
+	exception_handler handler;
 
 	for (const auto& action : Actions) {
 		try {
 			action(aCtx);
 		}
 		catch (...) {
-			if (eptr) {
-				try {
-					std::rethrow_exception(eptr);
-				}
-				catch (const std::exception& err) {
-					error(aCtx, err.what());
-				}
-			}
-			eptr = std::current_exception();
-			if (!aCtx.benv.options.staunch)
-				std::rethrow_exception(eptr);
+			handler(aCtx);
 		}
 	}
-	if (eptr) {
-		std::rethrow_exception(eptr);
-		/* NOTREACHED */
-	}
+	handler.finalize();
 }
 
 template<typename A>
@@ -57,7 +79,7 @@ sequenceP_(
 	const std::vector< std::function<A(acontext&)> >& Actions
 	)
 {
-	std::exception_ptr eptr;
+	exception_handler handler;
 	std::vector< async<unit> > jobs;
 
 	if (1 == aCtx.benv.options.nthreads || 1 == Actions.size()) {
@@ -86,23 +108,10 @@ sequenceP_(
 			job.wait();
 		}
 		catch (...) {
-			if (eptr) {
-				try {
-					std::rethrow_exception(eptr);
-				}
-				catch (const std::exception& err) {
-					error(aCtx, err.what());
-				}
-			}
-			eptr = std::current_exception();
-			if (!aCtx.benv.options.staunch)
-				std::rethrow_exception(eptr);
+			handler(aCtx);
 		}
 	}
-	if (eptr) {
-		std::rethrow_exception(eptr);
-		/* NOTREACHED */
-	}
+	handler.finalize();
 	assert(jobs.size() == Actions.size());
 }
 
@@ -114,7 +123,7 @@ forS(
 	const std::function<B(acontext&, const A&)>& aMap
 	)
 {
-	std::exception_ptr eptr;
+	exception_handler handler;
 	std::vector<B> outputs;
 
 	outputs.reserve(Inputs.size());
@@ -123,23 +132,10 @@ forS(
 			outputs.push_back(aMap(aCtx, input));
 		}
 		catch (...) {
-			if (eptr) {
-				try {
-					std::rethrow_exception(eptr);
-				}
-				catch (const std::exception& err) {
-					error(aCtx, err.what());
-				}
-			}
-			eptr = std::current_exception();
-			if (!aCtx.benv.options.staunch)
-				std::rethrow_exception(eptr);
+			handler(aCtx);
 		}
 	}
-	if (eptr) {
-		std::rethrow_exception(eptr);
-		/* NOTREACHED */
-	}
+	handler.finalize();
 
 	assert(outputs.size() == Inputs.size());
 	return (outputs);
@@ -153,7 +149,7 @@ forP(
 	const std::function<B(acontext&, const A&)>& aMap
 	)
 {
-	std::exception_ptr eptr;
+	exception_handler handler;
 	std::vector< async<B> > jobs;
 	std::vector<B> outputs;
 
@@ -182,23 +178,10 @@ forP(
 			outputs.push_back(job.wait());
 		}
 		catch (...) {
-			if (eptr) {
-				try {
-					std::rethrow_exception(eptr);
-				}
-				catch (const std::exception& err) {
-					error(aCtx, err.what());
-				}
-			}
-			eptr = std::current_exception();
-			if (!aCtx.benv.options.staunch)
-				std::rethrow_exception(eptr);
+			handler(aCtx);
 		}
 	}
-	if (eptr) {
-		std::rethrow_exception(eptr);
-		/* NOTREACHED */
-	}
+	handler.finalize();
 
 	assert(outputs.size() == Inputs.size());
 	return (outputs);
@@ -212,30 +195,17 @@ forS_(
 	const std::function<void(acontext&, const A&)>& aMap
 	)
 {
-	std::exception_ptr eptr;
+	exception_handler handler;
 
 	for (const A& input : Inputs) {
 		try {
 			aMap(aCtx, input);
 		}
 		catch (...) {
-			if (eptr) {
-				try {
-					std::rethrow_exception(eptr);
-				}
-				catch (const std::exception& err) {
-					error(aCtx, err.what());
-				}
-			}
-			eptr = std::current_exception();
-			if (!aCtx.benv.options.staunch)
-				std::rethrow_exception(eptr);
+			handler(aCtx);
 		}
 	}
-	if (eptr) {
-		std::rethrow_exception(eptr);
-		/* NOTREACHED */
-	}
+	handler.finalize();
 }
 
 template<typename A>
@@ -246,7 +216,7 @@ forP_(
 	const std::function<void(acontext&, const A&)>& aMap
 	)
 {
-	std::exception_ptr eptr;
+	exception_handler handler;
 	std::vector< async<unit> > jobs;
 
 	if (1 == aCtx.benv.options.nthreads || 1 == Inputs.size()) {
@@ -275,23 +245,10 @@ forP_(
 			job.wait();
 		}
 		catch (...) {
-			if (eptr) {
-				try {
-					std::rethrow_exception(eptr);
-				}
-				catch (const std::exception& err) {
-					error(aCtx, err.what());
-				}
-			}
-			eptr = std::current_exception();
-			if (!aCtx.benv.options.staunch)
-				std::rethrow_exception(eptr);
+			handler(aCtx);
 		}
 	}
-	if (eptr) {
-		std::rethrow_exception(eptr);
-		/* NOTREACHED */
-	}
+	handler.finalize();
 }
 
 }
