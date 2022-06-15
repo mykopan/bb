@@ -70,7 +70,7 @@ void thread_pool::need_thread() noexcept
 
 void thread_pool::thread_loop() noexcept
 {
-	std::function<void(void)> task;
+	thread_pool::task task;
 	for (;;) {
 		{
 			std::unique_lock guard(mutex);
@@ -87,8 +87,8 @@ void thread_pool::thread_loop() noexcept
 			task = tasks.front();
 			tasks.pop();
 		}
-		task();
-		task = std::function<void(void)>();
+		task(*this);
+		task = thread_pool::task();
 	}
 }
 

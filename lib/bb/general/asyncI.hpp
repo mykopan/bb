@@ -41,7 +41,7 @@ struct thread_pool {
 private:
 	template<typename T> friend struct async;
 
-	using task = std::function<void(void)>;
+	using task = std::function<void(thread_pool&)>;
 
 	void need_thread() noexcept;
 	void thread_loop() noexcept;
@@ -60,12 +60,11 @@ template<typename T>
 struct async {
 	async() = delete;
 	async(thread_pool&, const std::function<T(void)>&);
-	T wait();
+	T wait(thread_pool&);
 
 private:
 	struct nothing {};
 	using state = std::variant<nothing, T, std::exception_ptr>;
-	thread_pool&           pool;
 	std::shared_ptr<state> result;
 };
 
@@ -73,37 +72,35 @@ struct unit {};
 
 template<typename T>
 async<T>::async(thread_pool& aPool, const std::function<T(void)>& anAction)
-	: pool(aPool), result(std::make_shared<state>(nothing{}))
+	: result(std::make_shared<state>(nothing{}))
 {
 	struct task_closure {
-		void operator()(void)
+		void operator()(thread_pool& aPool)
 		{
 			assert(result);
 			assert(std::holds_alternative<nothing>(*result));
 			try {
 				T res = action();
 				{
-					std::unique_lock guard(pool.mutex);
+					std::unique_lock guard(aPool.mutex);
 					*result = std::move(res);
 				}
 			}
 			catch (...) {
 				std::exception_ptr eptr = std::current_exception();
 				{
-					std::unique_lock guard(pool.mutex);
+					std::unique_lock guard(aPool.mutex);
 					*result = eptr;
 				}
 			}
-			pool.cond_on_tasks_and_task_state.notify_all();
+			aPool.cond_on_tasks_and_task_state.notify_all();
 		}
 
-		thread_pool&           pool;
 		std::function<T(void)> action;
 		std::shared_ptr<state> result;
 	};
 
 	task_closure task = {
-		.pool = aPool,
 		.action = anAction,
 		.result = result
 	};
@@ -118,19 +115,19 @@ async<T>::async(thread_pool& aPool, const std::function<T(void)>& anAction)
 }
 
 template<typename T>
-T async<T>::wait()
+T async<T>::wait(thread_pool& aPool)
 {
 	assert(result);
 
 	for (;;) {
-		std::function<void(void)> task;
+		thread_pool::task task;
 		{
-			std::unique_lock guard(pool.mutex);
+			std::unique_lock guard(aPool.mutex);
 
-			pool.cond_on_tasks_and_task_state.wait(guard, [this] {
+			aPool.cond_on_tasks_and_task_state.wait(guard, [this, &aPool] {
 				return std::holds_alternative<T>(*result)
 					|| std::holds_alternative<std::exception_ptr>(*result)
-					|| !pool.tasks.empty();
+					|| !aPool.tasks.empty();
 			});
 
 			if (std::holds_alternative<T>(*result)
@@ -140,12 +137,12 @@ T async<T>::wait()
 				/* NOTREACHED */
 			}
 
-			assert(!pool.tasks.empty());
-			task = pool.tasks.front();
-			pool.tasks.pop();
+			assert(!aPool.tasks.empty());
+			task = aPool.tasks.front();
+			aPool.tasks.pop();
 		}
-		task();
-		task = std::function<void(void)>();
+		task(aPool);
+		task = thread_pool::task();
 	}
 
 	if (std::holds_alternative<T>(*result)) {

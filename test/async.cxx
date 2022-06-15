@@ -32,7 +32,7 @@ void test_async()
 
 		for (size_t i = 0; i < tasks.size(); ++i) {
 			try {
-				auto n = tasks[i].wait();
+				auto n = tasks[i].wait(pool);
 				assert(fact(i) == n);
 			}
 			catch (const std::exception& err) {
@@ -47,7 +47,7 @@ void test_async()
 		});
 		for (size_t i = 0; i < 10; ++i) {
 			try {
-				auto r = job.wait();
+				auto r = job.wait(pool);
 				assert(r == "some result");
 			}
 			catch (const std::exception& err) {
@@ -63,7 +63,7 @@ void test_async()
 		});
 		for (size_t i = 0; i < 10; ++i) {
 			try {
-				auto r = job.wait();
+				auto r = job.wait(pool);
 				assert(0 && "unexpected result");
 			}
 			catch (const std::exception& err) {

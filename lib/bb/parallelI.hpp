@@ -105,7 +105,7 @@ sequenceP_(
 
 	for (auto& job : jobs) {
 		try {
-			job.wait();
+			job.wait(aCtx.benv.pool);
 		}
 		catch (...) {
 			handler(aCtx);
@@ -175,7 +175,7 @@ forP(
 
 	for (auto& job : jobs) {
 		try {
-			outputs.push_back(job.wait());
+			outputs.push_back(job.wait(aCtx.benv.pool));
 		}
 		catch (...) {
 			handler(aCtx);
@@ -242,7 +242,7 @@ forP_(
 
 	for (auto& job : jobs) {
 		try {
-			job.wait();
+			job.wait(aCtx.benv.pool);
 		}
 		catch (...) {
 			handler(aCtx);
