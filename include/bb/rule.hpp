@@ -21,16 +21,22 @@ namespace bb {
 
 template<typename T>
 struct object_cls {
-	const std::type_info&                   type_info = typeid(T);
-	std::function<std::string(const T&)>    show;
-	std::function<std::size_t(const T&)>    hash;
-	std::function<bool(const T&, const T&)> equal;
+	const std::type_info& type_info = typeid(T);
+	std::function<std::string(const T&)> show = [](const T& x) {
+		return std::to_string(x);
+	};
+	std::function<std::size_t(const T&)> hash = [](const T& x) {
+		return std::hash<T>()(x);
+	};
+	std::function<bool(const T&, const T&)> equal = [](const T& x, const T& y) {
+		return x == y;
+	};
 };
 
 template<typename Key, typename Value>
 struct rule_cls {
-	object_cls<Key>   key_cls;
-	object_cls<Value> value_cls;
+	const object_cls<Key>&   key_cls;
+	const object_cls<Value>& value_cls;
 };
 
 template<typename Key, typename Value>

@@ -1,6 +1,5 @@
 
 #include <bb.hpp>
-#include <bb/rule.hpp>
 
 struct Dummy {
 	int x;
@@ -19,13 +18,11 @@ struct std::hash<Dummy>
 
 }
 
+#include <bb/rule.hpp>
+
 static const bb::object_cls<Dummy>& object_cls_instance(bb::proxy<Dummy>)
 {
-	static const bb::object_cls<Dummy> cls = {
-		.show = [](const Dummy& x) { return std::to_string(x); },
-		.hash = [](const Dummy& x) { return std::hash<Dummy>()(x); },
-		.equal = [](const Dummy& x, const Dummy& y) { return x == y; }
-	};
+	static const bb::object_cls<Dummy> cls;
 	return cls;
 }
 
