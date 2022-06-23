@@ -50,6 +50,18 @@ extern void file(rules&, const fpattern&, const std::function<void(acontext&, co
  */
 extern bool is_subset_fpattern(const filepath&, const fpattern&);
 
+/* Declare a Make-style phony action. A phony target does not name a file
+ * (despite living in the same namespace as file rules); rather, it names some
+ * action to be executed when explicitly requested. You can demand phony rules
+ * using want. (And need, although that's not recommended.)
+ *
+ * Phony actions are intended to define recipes that can be executed by the
+ * user. If you need a phony action in a rule then every execution where that
+ * rule is required will rerun both the rule and the phony action. However,
+ * note that phony actions are never executed more than once in a single
+ * build run. */
+extern void phony(rules&, const std::string&, const std::function<void(acontext&)>&);
+
 /* Default file rule which check a required file on existing. */
 extern void default_file_rule(rules&);
 

@@ -241,6 +241,23 @@ file(
 		});
 }
 
+void
+phony(
+	rules& Rules,
+	const std::string& aName,
+	const std::function<void(acontext&)>& anAction
+	)
+{
+	add_rule<fileQ, fileA>(Rules, 2,
+		[aName](const fileQ& aFileQ) {
+			return aFileQ.file_path.string() == aName;
+		},
+		[anAction](acontext& aCtx, const fileQ&) {
+			anAction(aCtx);
+			return fileA(0, 0);
+		});
+}
+
 }
 
 /*******************************************************************************
