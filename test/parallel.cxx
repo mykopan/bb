@@ -9,7 +9,9 @@ static const bb::object_cls<wint>& object_cls_instance(bb::proxy<wint>)
 	static const bb::object_cls<wint> cls = {
 		.show = [](const wint& w) { return std::to_string(w.x); },
 		.hash = [](const wint& w) { return w.x; },
-		.equal = [](const wint& x, const wint& y) { return x.x == y.x; }
+		.equal = [](const wint& x, const wint& y) { return x.x == y.x; },
+		.encode = [](std::ostream& s, const wint& w) { s << w.x; },
+		.decode = [](std::istream& s) { wint w; s >> w.x; return w; }
 	};
 	return cls;
 }

@@ -13,20 +13,9 @@
 
 namespace bb {
 
-template<typename T>
-static std::vector<T>&
-_t_vector_append(
-	std::vector<T>& aSrcDst,
-	const std::vector<T>& aSrc
-	)
-{
-	aSrcDst.insert(aSrcDst.end(), aSrc.begin(), aSrc.end());
-	return (aSrcDst);
-}
-
 static rules& _t_merge_rules(rules& aSrcDst, const rules& aSrc)
 {
-	_t_vector_append(aSrcDst.actions, aSrc.actions);
+	append(aSrcDst.actions, aSrc.actions);
 
 	for (const auto& tcruleSrc : aSrc.crules) {
 		const auto& typeOfKey = tcruleSrc.first;
@@ -40,12 +29,12 @@ static rules& _t_merge_rules(rules& aSrcDst, const rules& aSrc)
 			if (cruleSrcDst.cls.value_cls.type_info != cruleSrc.cls.value_cls.type_info)
 			{
 				throw error_incompatible_rules(
-					cruleSrcDst.cls.key_cls.type_info,
-					cruleSrcDst.cls.value_cls.type_info,
-					cruleSrc.cls.value_cls.type_info);
+					cruleSrcDst.cls.key_cls.type_info.name(),
+					cruleSrcDst.cls.value_cls.type_info.name(),
+					cruleSrc.cls.value_cls.type_info.name());
 				/* NOTREACHED */
 			}
-			_t_vector_append(cruleSrcDst.prules, cruleSrc.prules);
+			append(cruleSrcDst.prules, cruleSrc.prules);
 		}
 		else {
 			aSrcDst.crules.insert({ typeOfKey, cruleSrc });

@@ -12,6 +12,6 @@ int main(int argc, char *argv[])
 	test_file_pattern();
 	test_async();
 	test_errors();
-	test_parallel();
+	// test_parallel();
 }
 

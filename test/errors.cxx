@@ -6,6 +6,16 @@ struct Dummy {
 	inline bool operator== (const Dummy& o) const { return x == o.x; }
 };
 
+static std::ostream& operator<< (std::ostream& s, const Dummy& o)
+{
+	return s << o.x;
+}
+
+static std::istream& operator>> (std::istream& s, Dummy& o)
+{
+	return s >> o.x;
+}
+
 namespace std {
 
 string to_string(const Dummy& d) { return to_string(d.x); }

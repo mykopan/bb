@@ -60,16 +60,6 @@ error_directory_not_file(const std::filesystem::path& aDir)
 }
 
 std::runtime_error
-error_symlink_not_file(const std::filesystem::path& aPath)
-{
-	return error_structured(
-		"Build system error - expected a file, got a symlink",
-		{ { "Symlink", aPath.string() } },
-		"Probably due to calling bb::need on a symlink."
-		" Currently, BB only permits bb::need on files.");
-}
-
-std::runtime_error
 error_not_file(const std::filesystem::path& aPath)
 {
 	return error_structured(
@@ -81,32 +71,32 @@ error_not_file(const std::filesystem::path& aPath)
 
 std::runtime_error
 error_incompatible_rules(
-	const std::type_info& aTypeOfKey,
-	const std::type_info& aTypeOfValue1,
-	const std::type_info& aTypeOfValue2
+	const std::string& aTypeOfKey,
+	const std::string& aTypeOfValue1,
+	const std::string& aTypeOfValue2
 	)
 {
 	return error_structured(
 		"Build system error - detected rules with multiple result types",
-		{ { "Key type", aTypeOfKey.name() }
-		, { "First result type", aTypeOfValue1.name() }
-		, { "Second result type", aTypeOfValue2.name() }
+		{ { "Key type", aTypeOfKey }
+		, { "First result type", aTypeOfValue1 }
+		, { "Second result type", aTypeOfValue2 }
 		},
 		"A function passed to bb::add_rule has the wrong result type");
 }
 
 std::runtime_error
 error_no_rule_to_build_type(
-	const std::type_info& aTypeOfKey,
+	const std::string& aTypeOfKey,
 	const std::optional<std::string>& aKey,
-	const std::type_info& aTypeOfValue
+	const std::optional<std::string>& aTypeOfValue
 	)
 {
 	return error_structured(
 		"Build system error - no rule matches the key type",
-		{ { "Key type", aTypeOfKey.name() }
+		{ { "Key type", aTypeOfKey }
 		, { "Key value", aKey }
-		, { "Result type", aTypeOfValue.name() }
+		, { "Result type", aTypeOfValue }
 		},
 		"Either you are missing a call to bb::add_rule, "
 		"or your call to bb::apply_rule has the wrong key type");
@@ -114,18 +104,18 @@ error_no_rule_to_build_type(
 
 std::runtime_error
 error_rule_type_mismatch(
-	const std::type_info& aTypeOfKey,
+	const std::string& aTypeOfKey,
 	const std::optional<std::string>& aKey,
-	const std::type_info& aTypeOfValueReal,
-	const std::type_info& aTypeOfValueWant
+	const std::string& aTypeOfValueReal,
+	const std::string& aTypeOfValueWant
 	)
 {
 	return error_structured(
 		"Build system error - rule used at the wrong result type",
-		{ { "Key type", aTypeOfKey.name() }
+		{ { "Key type", aTypeOfKey }
 		, { "Key value", aKey }
-		, { "Rule result type", aTypeOfValueReal.name() }
-		, { "Requested result type", aTypeOfValueWant.name() }
+		, { "Rule result type", aTypeOfValueReal }
+		, { "Requested result type", aTypeOfValueWant }
 		},
 		"Either the function passed to bb::add_rule has the wrong result type, "
 		"or the result of bb::apply_rule is used at the wrong type");
@@ -133,7 +123,7 @@ error_rule_type_mismatch(
 
 std::runtime_error
 error_multiple_rules_match(
-	const std::type_info& aTypeOfKey,
+	const std::string& aTypeOfKey,
 	const std::string& aKey,
 	size_t aCount
 	)
@@ -141,7 +131,7 @@ error_multiple_rules_match(
 	return error_structured(
 		std::string("Build system error - key matches ") +
 			(0 == aCount ? "no" : "multiple") + " rules",
-		{ { "Key type", aTypeOfKey.name() }
+		{ { "Key type", aTypeOfKey }
 		, { "Key value", aKey }
 		, { "Rules matched", std::to_string(aCount) }
 		},
@@ -152,13 +142,13 @@ error_multiple_rules_match(
 
 std::runtime_error
 error_rule_recursion(
-	const std::type_info& aTypeOfKey,
+	const std::string& aTypeOfKey,
 	const std::string& aKey
 	)
 {
 	return error_structured(
 		"Build system error - recursion detected",
-		{ { "Key type", aTypeOfKey.name() }
+		{ { "Key type", aTypeOfKey }
 		, { "Key value", aKey }
 		},
 		"Rules may not be recursive");

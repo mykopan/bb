@@ -33,43 +33,40 @@ extern std::runtime_error
 error_directory_not_file(const std::filesystem::path&);
 
 extern std::runtime_error
-error_symlink_not_file(const std::filesystem::path&);
-
-extern std::runtime_error
 error_not_file(const std::filesystem::path&);
 
 extern std::runtime_error
 error_incompatible_rules(
-	const std::type_info& aTypeOfKey,
-	const std::type_info& aTypeOfValue1,
-	const std::type_info& aTypeOfValue2
+	const std::string& aTypeOfKey,
+	const std::string& aTypeOfValue1,
+	const std::string& aTypeOfValue2
 	);
 
 extern std::runtime_error
 error_no_rule_to_build_type(
-	const std::type_info& aTypeOfKey,
+	const std::string& aTypeOfKey,
 	const std::optional<std::string>& aKey,
-	const std::type_info& aTypeOfValue
+	const std::optional<std::string>& aTypeOfValue
 	);
 
 extern std::runtime_error
 error_rule_type_mismatch(
-	const std::type_info& aTypeOfKey,
+	const std::string& aTypeOfKey,
 	const std::optional<std::string>& aKey,
-	const std::type_info& aTypeOfValueReal,
-	const std::type_info& aTypeOfValueWant
+	const std::string& aTypeOfValueReal,
+	const std::string& aTypeOfValueWant
 	);
 
 extern std::runtime_error
 error_multiple_rules_match(
-	const std::type_info& aTypeOfKey,
+	const std::string& aTypeOfKey,
 	const std::string& aKey,
 	size_t aCount
 	);
 
 extern std::runtime_error
 error_rule_recursion(
-	const std::type_info& aTypeOfKey,
+	const std::string& aTypeOfKey,
 	const std::string& aKey
 	);
 

@@ -9,7 +9,10 @@
  */
 
 # include <bb/types.hpp>
+# include <bb/binary.hpp>
+
 # include <functional>
+# include <optional>
 # include <memory>
 # include <vector>
 
@@ -31,12 +34,22 @@ struct object_cls {
 	std::function<bool(const T&, const T&)> equal = [](const T& x, const T& y) {
 		return x == y;
 	};
+	std::function<void(std::ostream&, const T&)> encode =
+		[](std::ostream& s, const T& x) { s << x; };
+	std::function<T(std::istream&)> decode = [](std::istream& s) {
+		T x;
+		s >> x;
+		return x;
+	};
 };
 
 template<typename Key, typename Value>
 struct rule_cls {
 	const object_cls<Key>&   key_cls;
 	const object_cls<Value>& value_cls;
+	std::function<std::optional<Value>(const Key&)> stored = [](const Key&) {
+		return std::nullopt;
+	};
 };
 
 template<typename Key, typename Value>
@@ -209,6 +222,13 @@ untyped_object_cls to_untyped_object_cls(const object_cls<T>& aCls)
 		.equal = [&aCls](const untyped_object& aLhs, const untyped_object& aRhs) {
 			return aCls.equal(*std::static_pointer_cast<T, void>(aLhs),
 				*std::static_pointer_cast<T, void>(aRhs));
+		},
+		.encode = [&aCls](std::ostream& aStrm, const untyped_object& anObj) {
+			aCls.encode(aStrm, *std::static_pointer_cast<T, void>(anObj));
+		},
+		.decode = [&aCls](std::istream& aStrm) {
+			return std::static_pointer_cast<void, T>(
+				std::make_shared<T>(aCls.decode(aStrm)));
 		}
 	};
 }
@@ -223,7 +243,14 @@ const untyped_rule_cls& untyped_rule_cls_instance(proxy<Key> k, proxy<Value> v)
 		to_untyped_object_cls(ruleCls.value_cls);
 	static const untyped_rule_cls untypedRuleCls = {
 		.key_cls = untypedKeyCls,
-		.value_cls = untypedValueCls
+		.value_cls = untypedValueCls,
+		.stored = [&ruleCls](const untyped_key& aKey)
+		{
+			std::optional<Value> mbValue =
+				ruleCls.stored(*std::static_pointer_cast<Key, void>(aKey));
+			return mbValue ? std::make_optional(std::static_pointer_cast<void, Value>(std::make_shared<Value>(*mbValue)))
+			               : std::nullopt;
+		}
 	};
 	return untypedRuleCls;
 }
