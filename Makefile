@@ -4,7 +4,7 @@ CXXFLAGS = -std=c++17
 LFLAGS = -Lbuild/lib -lstdc++
 
 .PHONY: all
-all: build/lib/libbb.a build/bin/test
+all: build/lib/libbb.a build/bin/test build/bin/tar
 
 ###############################################################################
 # common
@@ -30,6 +30,26 @@ build/lib/libbb.a: $(BB_ARCHIVE_OBJS)
 	@mkdir -p $(dir $@)
 	@echo "# archiving ( $@ )"
 	@$(AR) -rc $@ $(BB_ARCHIVE_OBJS)
+
+###############################################################################
+# examples
+
+BB_EXAMPLES = tar
+
+BB_EXAMPLE_INTER_DIR = build/inter/$(1).prog
+BB_EXAMPLE_SRCS = $(shell find examples/$(1) -type f -name "*.cxx")
+BB_EXAMPLE_OBJS = $(foreach src,$(call BB_EXAMPLE_SRCS,$(1)),$(call BB_EXAMPLE_INTER_DIR,$(1))/$(src).o)
+
+define bb_example
+$(foreach src,$(call BB_EXAMPLE_SRCS,$(1)),$(eval $(call bb_compile,$(src),$(call BB_EXAMPLE_INTER_DIR,$(1)))))
+
+build/bin/$(1): $(call BB_EXAMPLE_OBJS,$(1)) build/lib/libbb.a
+	@mkdir -p $$(dir $$@)
+	@echo "# linking ( $$@ )"
+	@$(CC) $(CFLAGS) -Ilib $(CXXFLAGS) $(LFLAGS) -o $$@ $(call BB_EXAMPLE_OBJS,$(1)) -lbb
+endef
+
+$(foreach exmpl,$(BB_EXAMPLES),$(eval $(call bb_example,$(exmpl))))
 
 ###############################################################################
 # test
