@@ -11,6 +11,7 @@
 # include <bb/types.hpp>
 # include <bb/rules/start.hpp>
 # include <bb/rules/file.hpp>
+# include <bb/rules/rerun.hpp>
 # include <functional>
 
 /*******************************************************************************

@@ -7,6 +7,7 @@
 #include "bb/parallelI.hpp"
 #include "bb/run.hpp"
 #include "bb/rules/file.hpp"
+#include "bb/rules/rerun.hpp"
 #include <mutex>
 #include <algorithm>
 
@@ -19,6 +20,7 @@ namespace bb {
 static void _t_default_rules(rules& Rules)
 {
 	default_file_rule(Rules);
+	default_rerun_rule(Rules);
 }
 
 static void _t_sort_rules(rules& Rules)
