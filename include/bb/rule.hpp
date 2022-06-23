@@ -137,12 +137,11 @@ add_rule(
 
 	unsafe_add_rule(Rules, cls, aPrio,
 		[aPred](const untyped_key& aKey) {
-			return aPred(*std::static_pointer_cast<Key, void>(aKey));
+			return aPred(*static_cast<const Key*>(aKey.get()));
 		},
 		[anAction](acontext& aCtx, const untyped_key& aKey) {
-			return std::static_pointer_cast<void, Value>(
-				std::make_shared<Value>(anAction(aCtx,
-					*std::static_pointer_cast<Key, void>(aKey))));
+			return static_cast<untyped_value>(std::make_shared<Value>(
+				anAction(aCtx, *static_cast<const Key*>(aKey.get()))));
 		});
 }
 
@@ -154,8 +153,8 @@ std::vector<Value> apply_rules(acontext& aCtx, const std::vector<Key>& Keys)
 
 	std::vector<untyped_key> untypedKeys;
 	for (const Key& k : Keys) {
-		untypedKeys.push_back(
-			std::static_pointer_cast<void, Key>(std::make_shared<Key>(k)));
+		untypedKeys.push_back(static_cast<untyped_key>(
+			std::make_shared<Key>(k)));
 	}
 
 	std::vector<untyped_value> untypedValues =
@@ -163,7 +162,7 @@ std::vector<Value> apply_rules(acontext& aCtx, const std::vector<Key>& Keys)
 
 	std::vector<Value> values;
 	for (const untyped_value& untypedValue : untypedValues)
-		values.push_back(*std::static_pointer_cast<Value, void>(untypedValue));
+		values.push_back(*static_cast<Value*>(untypedValue.get()));
 	return values;
 }
 
@@ -175,8 +174,8 @@ void apply_rules_(acontext& aCtx, const std::vector<Key>& Keys)
 
 	std::vector<untyped_key> untypedKeys;
 	for (const Key& k : Keys) {
-		untypedKeys.push_back(
-			std::static_pointer_cast<void, Key>(std::make_shared<Key>(k)));
+		untypedKeys.push_back(static_cast<untyped_key>(
+			std::make_shared<Key>(k)));
 	}
 	unsafe_apply_rules_(aCtx, cls, untypedKeys);
 }
@@ -188,9 +187,9 @@ Value apply_rule(acontext& aCtx, const Key& aKey)
 		untyped_rule_cls_instance(proxy<Key>{}, proxy<Value>{});
 
 	untyped_key untypedKey =
-		std::static_pointer_cast<void, Key>(std::make_shared<Key>(aKey));
+		static_cast<untyped_key>(std::make_shared<Key>(aKey));
 	untyped_value untypedValue = unsafe_apply_rule(aCtx, cls, untypedKey);
-	return *std::static_pointer_cast<Value, void>(untypedValue);
+	return *static_cast<Value*>(untypedValue.get());
 }
 
 template<typename Key, typename Value>
@@ -200,7 +199,7 @@ void apply_rule_(acontext& aCtx, const Key& aKey)
 		untyped_rule_cls_instance(proxy<Key>{}, proxy<Value>{});
 
 	untyped_key untypedKey =
-		std::static_pointer_cast<void, Key>(std::make_shared<Key>(aKey));
+		static_cast<untyped_key>(std::make_shared<Key>(aKey));
 	unsafe_apply_rule_(aCtx, cls, untypedKey);
 }
 
@@ -214,21 +213,21 @@ untyped_object_cls to_untyped_object_cls(const object_cls<T>& aCls)
 	return untyped_object_cls {
 		.type_info = aCls.type_info,
 		.show = [&aCls](const untyped_object& anObj) {
-			return aCls.show(*std::static_pointer_cast<T, void>(anObj));
+			return aCls.show(*static_cast<const T*>(anObj.get()));
 		},
 		.hash = [&aCls](const untyped_object& anObj) {
-			return aCls.hash(*std::static_pointer_cast<T, void>(anObj));
+			return aCls.hash(*static_cast<const T*>(anObj.get()));
 		},
 		.equal = [&aCls](const untyped_object& aLhs, const untyped_object& aRhs) {
-			return aCls.equal(*std::static_pointer_cast<T, void>(aLhs),
-				*std::static_pointer_cast<T, void>(aRhs));
+			return aCls.equal(*static_cast<const T*>(aLhs.get()),
+				*static_cast<const T*>(aRhs.get()));
 		},
 		.encode = [&aCls](std::ostream& aStrm, const untyped_object& anObj) {
-			aCls.encode(aStrm, *std::static_pointer_cast<T, void>(anObj));
+			aCls.encode(aStrm, *static_cast<const T*>(anObj.get()));
 		},
 		.decode = [&aCls](std::istream& aStrm) {
-			return std::static_pointer_cast<void, T>(
-				std::make_shared<T>(aCls.decode(aStrm)));
+			return static_cast<untyped_object>(std::make_shared<T>(
+				aCls.decode(aStrm)));
 		}
 	};
 }
@@ -247,8 +246,8 @@ const untyped_rule_cls& untyped_rule_cls_instance(proxy<Key> k, proxy<Value> v)
 		.stored = [&ruleCls](const untyped_key& aKey)
 		{
 			std::optional<Value> mbValue =
-				ruleCls.stored(*std::static_pointer_cast<Key, void>(aKey));
-			return mbValue ? std::make_optional(std::static_pointer_cast<void, Value>(std::make_shared<Value>(*mbValue)))
+				ruleCls.stored(*static_cast<const Key*>(aKey.get()));
+			return mbValue ? std::make_optional(static_cast<untyped_value>(std::make_shared<Value>(*mbValue)))
 			               : std::nullopt;
 		}
 	};
